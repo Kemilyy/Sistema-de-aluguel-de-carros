@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Activity,
+  AlertTriangle,
   ArrowDownLeft,
   ArrowLeft,
   ArrowRight,
   ArrowUpRight,
   Bell,
   CalendarDays,
+  CalendarX2,
   CarFront,
   Check,
   ChevronDown,
@@ -16,6 +18,7 @@ import {
   Download,
   FileCheck2,
   Gauge,
+  Heart,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -34,6 +37,8 @@ const initialCars = [
   {
     id: 'c1',
     name: 'Jeep Compass',
+    brand: 'Jeep',
+    category: 'SUV',
     type: 'SUV · Automático',
     price: 289,
     image:
@@ -44,6 +49,8 @@ const initialCars = [
   {
     id: 'c2',
     name: 'Hyundai Creta',
+    brand: 'Hyundai',
+    category: 'SUV',
     type: 'SUV · Automático',
     price: 239,
     image:
@@ -54,12 +61,266 @@ const initialCars = [
   {
     id: 'c3',
     name: 'Honda Civic',
+    brand: 'Honda',
+    category: 'Sedan',
     type: 'Sedan · Automático',
     price: 319,
     image:
       'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=900&q=85',
     tag: 'Premium',
     color: '#e8eaf0',
+  },
+  {
+    id: 'c4',
+    name: 'Toyota Corolla',
+    brand: 'Toyota',
+    category: 'Sedan',
+    type: 'Sedan · Híbrido Flex',
+    price: 299,
+    image:
+      'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?auto=format&fit=crop&w=900&q=85',
+    tag: 'Híbrido',
+    color: '#eef2f5',
+  },
+  {
+    id: 'c5',
+    name: 'Volkswagen Nivus',
+    brand: 'Volkswagen',
+    category: 'SUV',
+    type: 'SUV Coupé · Turbo Flex',
+    price: 229,
+    image:
+      'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=900&q=85',
+    tag: 'Moderno',
+    color: '#ebeef2',
+  },
+  {
+    id: 'c6',
+    name: 'Fiat Pulse',
+    brand: 'Fiat',
+    category: 'SUV',
+    type: 'Crossover · Turbo Flex',
+    price: 199,
+    image:
+      'https://images.unsplash.com/photo-1508974239320-0a029497e820?auto=format&fit=crop&w=900&q=85',
+    tag: 'Custo-benefício',
+    color: '#f5eee8',
+  },
+  {
+    id: 'c7',
+    name: 'Jeep Renegade',
+    brand: 'Jeep',
+    category: 'SUV',
+    type: 'SUV · 4x4 Turbo Flex',
+    price: 259,
+    image:
+      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=900&q=85',
+    tag: 'Aventura',
+    color: '#eeeae4',
+  },
+  {
+    id: 'c8',
+    name: 'BMW 320i',
+    brand: 'BMW',
+    category: 'Premium',
+    type: 'Sedan Premium · TwinPower',
+    price: 489,
+    image:
+      'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=900&q=85',
+    tag: 'Luxo',
+    color: '#e5e9ec',
+  },
+  {
+    id: 'c9',
+    name: 'Chevrolet Tracker',
+    brand: 'Chevrolet',
+    category: 'SUV',
+    type: 'SUV · Turbo Automático',
+    price: 249,
+    image:
+      'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=900&q=85',
+    tag: 'Familiar',
+    color: '#edf2f7',
+  },
+  {
+    id: 'c10',
+    name: 'Peugeot 208',
+    brand: 'Peugeot',
+    category: 'Hatch',
+    type: 'Hatch · Turbo Automático',
+    price: 189,
+    image:
+      'https://images.unsplash.com/photo-1541899481282-d53bffe3c35d?auto=format&fit=crop&w=900&q=85',
+    tag: 'Compacto',
+    color: '#eff1f5',
+  },
+  {
+    id: 'c11',
+    name: 'BYD Song Plus',
+    brand: 'BYD',
+    category: 'Híbrido',
+    type: 'SUV · Híbrido Plug-in DM-i',
+    price: 359,
+    image:
+      'https://images.unsplash.com/photo-1519641471654-76ce0107ad1b?auto=format&fit=crop&w=900&q=85',
+    tag: 'Sustentável',
+    color: '#e9f1f0',
+  },
+  {
+    id: 'c12',
+    name: 'Ford Bronco Sport',
+    brand: 'Ford',
+    category: 'SUV',
+    type: 'SUV · 4x4 EcoBoost',
+    price: 389,
+    image:
+      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=85',
+    tag: 'Performance',
+    color: '#f1ede9',
+  },
+  {
+    id: 'c13',
+    name: 'Volkswagen T-Cross',
+    brand: 'Volkswagen',
+    category: 'SUV',
+    type: 'SUV · 200 TSI Automático',
+    price: 245,
+    image:
+      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=900&q=85',
+    tag: 'Popular',
+    color: '#e8edf0',
+  },
+  {
+    id: 'c14',
+    name: 'Toyota Hilux SRX',
+    brand: 'Toyota',
+    category: 'Picape',
+    type: 'Picape 4x4 · Diesel Turbo',
+    price: 469,
+    image:
+      'https://images.unsplash.com/photo-1559416523-140ddc3d238c?auto=format&fit=crop&w=900&q=85',
+    tag: 'Robustez',
+    color: '#eae5df',
+  },
+  {
+    id: 'c15',
+    name: 'Chevrolet Onix Premier',
+    brand: 'Chevrolet',
+    category: 'Hatch',
+    type: 'Hatch · Turbo Automático',
+    price: 179,
+    image:
+      'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=900&q=85',
+    tag: 'Super Econômico',
+    color: '#edf1f4',
+  },
+  {
+    id: 'c16',
+    name: 'Volvo XC60 Recharge',
+    brand: 'Volvo',
+    category: 'Premium',
+    type: 'SUV Híbrido Plug-in · AWD',
+    price: 589,
+    image:
+      'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=900&q=85',
+    tag: 'Segurança Máxima',
+    color: '#e6ebef',
+  },
+  {
+    id: 'c17',
+    name: 'BYD Dolphin',
+    brand: 'BYD',
+    category: 'Elétrico',
+    type: '100% Elétrico · EV Compacto',
+    price: 269,
+    image:
+      'https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?auto=format&fit=crop&w=900&q=85',
+    tag: '100% Elétrico',
+    color: '#eaf3f2',
+  },
+  {
+    id: 'c18',
+    name: 'Audi A4 S-Line',
+    brand: 'Audi',
+    category: 'Premium',
+    type: 'Sedan Executivo · TFSI S-Tronic',
+    price: 519,
+    image:
+      'https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?auto=format&fit=crop&w=900&q=85',
+    tag: 'Design Alemão',
+    color: '#e9ecef',
+  },
+  {
+    id: 'c19',
+    name: 'Fiat Fastback',
+    brand: 'Fiat',
+    category: 'SUV',
+    type: 'SUV Coupé · Turbo Flex',
+    price: 235,
+    image:
+      'https://images.unsplash.com/photo-1619767886558-efdc259cde1a?auto=format&fit=crop&w=900&q=85',
+    tag: 'Porta-malas 600L',
+    color: '#f1eee9',
+  },
+  {
+    id: 'c20',
+    name: 'Hyundai HB20 Platinum',
+    brand: 'Hyundai',
+    category: 'Hatch',
+    type: 'Hatch · 1.0 Turbo GDI',
+    price: 185,
+    image:
+      'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=900&q=85',
+    tag: 'Ágil na Cidade',
+    color: '#edf0f3',
+  },
+  {
+    id: 'c21',
+    name: 'Nissan Kicks Exclusive',
+    brand: 'Nissan',
+    category: 'SUV',
+    type: 'SUV · Câmbio Xtronic CVT',
+    price: 225,
+    image:
+      'https://images.unsplash.com/photo-1583121274602-3e2820c69888?auto=format&fit=crop&w=900&q=85',
+    tag: 'Conforto',
+    color: '#f4ede6',
+  },
+  {
+    id: 'c22',
+    name: 'Mercedes-Benz C300',
+    brand: 'Mercedes-Benz',
+    category: 'Premium',
+    type: 'Sedan Luxo · 9G-Tronic AMG Line',
+    price: 629,
+    image:
+      'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=900&q=85',
+    tag: 'Sofisticação',
+    color: '#e5eaee',
+  },
+  {
+    id: 'c23',
+    name: 'Renault Duster Iconic',
+    brand: 'Renault',
+    category: 'SUV',
+    type: 'SUV Robusto · 1.3 Turbo TCe',
+    price: 239,
+    image:
+      'https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=900&q=85',
+    tag: 'Espaço Interno',
+    color: '#eae5df',
+  },
+  {
+    id: 'c24',
+    name: 'Porsche Macan',
+    brand: 'Porsche',
+    category: 'Premium',
+    type: 'SUV Esportivo · PDK 2.0 Turbo',
+    price: 799,
+    image:
+      'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=85',
+    tag: 'Superesportivo',
+    color: '#eeeae5',
   },
 ]
 const seed = [
@@ -110,12 +371,21 @@ const statuses = {
   Concluído: 'done',
   Pendente: 'pending',
 }
+const parsePrice = (n) => {
+  if (typeof n === 'number') return n
+  if (!n) return 0
+  const cleaned = String(n)
+    .replace(/[^\d.,]/g, '')
+    .replace(',', '.')
+  const num = parseFloat(cleaned)
+  return isNaN(num) ? 0 : num
+}
 const money = (n) =>
   new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
     maximumFractionDigits: 0,
-  }).format(n)
+  }).format(parsePrice(n))
 function load(key, fallback) {
   try {
     const legacy = key.replace(/^rentflow_/, 'driveon_')
@@ -128,6 +398,42 @@ function load(key, fallback) {
 }
 const roleFromApi = (type) =>
   type === 'BANCO' ? 'BANCO' : type === 'AGENTE' ? 'AGENTE' : 'CLIENTE'
+function formatDateInput(date) {
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+function parsePtBrDate(str) {
+  if (!str) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str
+  const slash = str.match(/(\d{2})\/(\d{2})\/(\d{4})/)
+  if (slash) return `${slash[3]}-${slash[2]}-${slash[1]}`
+  const months = {
+    jan: '01',
+    fev: '02',
+    mar: '03',
+    abr: '04',
+    mai: '05',
+    jun: '06',
+    jul: '07',
+    ago: '08',
+    set: '09',
+    out: '10',
+    nov: '11',
+    dez: '12',
+  }
+  const clean = str.toLowerCase().replace(/de /g, '').replace(',', '').trim()
+  const parts = clean.split(/\s+/)
+  if (parts.length >= 3) {
+    const day = parts[0].padStart(2, '0')
+    const monKey = parts[1].slice(0, 3)
+    const month = months[monKey] || '01'
+    const year = parts[2]
+    return `${year}-${month}-${day}`
+  }
+  return null
+}
 function apiOrder(order, cars = initialCars) {
   const car = cars.find((vehicle) => vehicle.name === order.veiculo)
   const statusMap = {
@@ -154,6 +460,8 @@ function apiOrder(order, cars = initialCars) {
       month: 'short',
       year: 'numeric',
     }),
+    rawStart: order.dataInicio,
+    rawEnd: order.dataFim,
     total: Number(order.valorTotal),
     created: 'Pedido cadastrado',
     owner: order.cliente?.nome || 'Cliente',
@@ -214,7 +522,7 @@ async function localPassword(password, salt) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => load('rentflow_user', null))
   const [users, setUsers] = useState(() => load('rentflow_users', []))
   const [orders, setOrders] = useState(() => (apiConfigured ? [] : load('rentflow_orders', seed)))
   const [ordersLoading, setOrdersLoading] = useState(false)
@@ -225,9 +533,9 @@ export default function App() {
   const [contractsLoading, setContractsLoading] = useState(apiConfigured)
   const [contractsError, setContractsError] = useState('')
   const [contractsRefresh, setContractsRefresh] = useState(0)
-  const [cars, setCars] = useState(apiConfigured ? [] : initialCars)
-  const [carsLoading, setCarsLoading] = useState(apiConfigured)
-  const [view, setView] = useState('Início')
+  const [cars, setCars] = useState(initialCars)
+  const [carsLoading, setCarsLoading] = useState(false)
+  const [view, setView] = useState(() => load('rentflow_view', 'Início'))
   const [modal, setModal] = useState('')
   const [selected, setSelected] = useState(null)
   const [selectedContract, setSelectedContract] = useState(null)
@@ -242,7 +550,45 @@ export default function App() {
   const [hasUnreadNotification, setHasUnreadNotification] = useState(() =>
     load('rentflow_unread_notification', false),
   )
-  useEffect(() => localStorage.removeItem('rentflow_user'), [])
+  const [favorites, setFavorites] = useState(() => {
+    const account = load('rentflow_user', null)
+    return account?.email
+      ? load(`rentflow_favorites:${account.email.toLowerCase()}`, [])
+      : load('rentflow_favorites', [])
+  })
+  const toggleFavorite = (carItem) => {
+    const key = carItem.id || carItem.name
+    setFavorites((prev) => {
+      const exists = prev.includes(key)
+      const next = exists ? prev.filter((k) => k !== key) : [...prev, key]
+      setToast(
+        exists
+          ? `${carItem.name} removido dos favoritos.`
+          : `${carItem.name} adicionado aos seus favoritos!`,
+      )
+      return next
+    })
+  }
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('rentflow_user', JSON.stringify(user))
+    } else {
+      localStorage.removeItem('rentflow_user')
+    }
+  }, [user])
+  useEffect(() => {
+    if (user?.email) setFavorites(load(`rentflow_favorites:${user.email.toLowerCase()}`, []))
+  }, [user?.email])
+  useEffect(() => {
+    if (view) {
+      localStorage.setItem('rentflow_view', JSON.stringify(view))
+    }
+  }, [view])
+  useEffect(() => {
+    if (user && ['AGENTE', 'BANCO'].includes(user.role) && (view === 'Veículos' || view === 'Favoritos')) {
+      setView('Início')
+    }
+  }, [user, view])
   useEffect(() => localStorage.setItem('rentflow_orders', JSON.stringify(orders)), [orders])
   useEffect(() => localStorage.setItem('rentflow_users', JSON.stringify(users)), [users])
   useEffect(
@@ -250,6 +596,11 @@ export default function App() {
       localStorage.setItem('rentflow_unread_notification', JSON.stringify(hasUnreadNotification)),
     [hasUnreadNotification],
   )
+  useEffect(() => {
+    if (user?.email) {
+      localStorage.setItem(`rentflow_favorites:${user.email.toLowerCase()}`, JSON.stringify(favorites))
+    }
+  }, [favorites, user])
   useEffect(() => {
     if (toast) {
       const t = setTimeout(() => setToast(''), 3200)
@@ -259,8 +610,61 @@ export default function App() {
   useEffect(() => {
     if (apiConfigured) {
       request('/automoveis')
-        .then((rows) => setCars(rows))
-        .catch(() => setToast('Não foi possível carregar os veículos do banco.'))
+        .then((rows) => {
+          if (Array.isArray(rows) && rows.length > 0) {
+            const merged = initialCars.map((defaultCar) => {
+              const fromApi = rows.find(
+                (r) => r.name?.toLowerCase().trim() === defaultCar.name?.toLowerCase().trim(),
+              )
+              return fromApi
+                ? {
+                    ...defaultCar,
+                    ...fromApi,
+                    image: ['BYD Song Plus', 'Volkswagen T-Cross'].includes(defaultCar.name)
+                      ? defaultCar.image
+                      : fromApi.image || defaultCar.image,
+                    price: parsePrice(fromApi.price) || defaultCar.price,
+                    category: fromApi.category || defaultCar.category,
+                  }
+                : defaultCar
+            })
+            const apiExtras = rows
+              .filter(
+                (r) =>
+                  !initialCars.some(
+                    (c) => c.name?.toLowerCase().trim() === r.name?.toLowerCase().trim(),
+                  ),
+              )
+              .map((r) => ({
+                ...r,
+                price: parsePrice(r.price),
+                category:
+                  r.category ||
+                  (r.type?.toLowerCase().includes('suv')
+                    ? 'SUV'
+                    : r.type?.toLowerCase().includes('sedan')
+                      ? 'Sedan'
+                      : r.type?.toLowerCase().includes('hatch')
+                        ? 'Hatch'
+                        : r.type?.toLowerCase().includes('híbrido') ||
+                            r.type?.toLowerCase().includes('hibrido')
+                          ? 'Híbrido'
+                          : r.type?.toLowerCase().includes('elétrico') ||
+                              r.type?.toLowerCase().includes('eletrico')
+                            ? 'Elétrico'
+                            : r.type?.toLowerCase().includes('picape')
+                              ? 'Picape'
+                              : 'SUV'),
+              }))
+            setCars([...merged, ...apiExtras])
+          } else {
+            setCars(initialCars)
+          }
+        })
+        .catch(() => {
+          setCars(initialCars)
+          setToast('Não foi possível carregar os veículos do banco.')
+        })
         .finally(() => setCarsLoading(false))
     }
   }, [])
@@ -322,6 +726,19 @@ export default function App() {
       active = false
     }
   }, [user, cars, orders, contractsRefresh])
+  useEffect(() => {
+    if (!user?.api || !['AGENTE', 'BANCO'].includes(user.role)) return
+    const refreshQueues = () => {
+      setOrdersRefresh((value) => value + 1)
+      setContractsRefresh((value) => value + 1)
+    }
+    const timer = window.setInterval(refreshQueues, 30000)
+    window.addEventListener('focus', refreshQueues)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('focus', refreshQueues)
+    }
+  }, [user?.api, user?.role])
   const mine = useMemo(
     () =>
       orders.filter(
@@ -339,6 +756,10 @@ export default function App() {
       `${o.id} ${o.car} ${o.status} ${o.owner}`.toLowerCase().includes(query.toLowerCase()),
   )
   const navigate = (name) => {
+    if (name === 'Veículos' && ['AGENTE', 'BANCO'].includes(user?.role)) {
+      setView('Início')
+      return
+    }
     setView(name)
     setMobile(false)
     if (name === 'Contratos') {
@@ -468,6 +889,7 @@ export default function App() {
     setUser(null)
     setAuthVisible(false)
     localStorage.removeItem('rentflow_user')
+    localStorage.removeItem('rentflow_view')
     setView('Início')
   }
   const openOrder = (vehicle) => {
@@ -491,6 +913,8 @@ export default function App() {
         month: 'short',
         year: 'numeric',
       }),
+      rawStart: values.start,
+      rawEnd: values.end,
       total: values.days * car.price,
       created: new Date().toLocaleDateString('pt-BR'),
       owner: user.name,
@@ -554,11 +978,21 @@ export default function App() {
       setOrdersError('')
     }
     setOrders((current) => current.map((o) => (o.id === id ? { ...o, ...patch } : o)))
-    setHasUnreadNotification(true)
+    if (patch.contract && user.role === 'BANCO') {
+      setContracts((current) =>
+        current.map((c) =>
+          c.orderId === id || c.orderId === `AL-${order?.apiId}` || c.apiId === order?.apiId
+            ? { ...c, status: 'Ativo' }
+            : c,
+        ),
+      )
+    }
+    setOrdersRefresh((v) => v + 1)
+    setContractsRefresh((v) => v + 1)
     setModal('')
     setToast(
       patch.contract && user.role === 'BANCO'
-        ? 'Contrato ativado e disponível na aba Contratos.'
+        ? 'Crédito concedido e contrato executado com sucesso!'
         : patch.status === 'Aprovado'
           ? 'Pedido aprovado. O contrato está aguardando formalização bancária.'
           : 'Pedido atualizado.',
@@ -568,14 +1002,24 @@ export default function App() {
     const savedContract = contracts.find(
       (contract) =>
         contract.orderId === order.id ||
-        (order.apiId && String(contract.orderId) === `AL-${order.apiId}`),
+        (order.apiId && String(contract.orderId) === `AL-${order.apiId}`) ||
+        contract.id === order.id,
     )
+    const target = savedContract || order
+    const isApprovedByBank =
+      target?.status === 'Ativo' || target?.status === 'ATIVO' || order.status === 'Concluído'
+
+    if (!isApprovedByBank) {
+      setToast('O contrato só pode ser visualizado após a aprovação do agente bancário.')
+      return
+    }
+
     if (savedContract) {
       setSelected(null)
       setSelectedContract(savedContract)
       return
     }
-    if (['Aprovado', 'Concluído'].includes(order.status)) {
+    if (order.status === 'Concluído') {
       setSelected(null)
       setSelectedContract({
         ...order,
@@ -583,11 +1027,11 @@ export default function App() {
         orderId: order.id,
         client: order.owner,
         email: order.email || user.email,
-        status: order.status === 'Concluído' ? 'Ativo' : 'Aguardando banco',
+        status: 'Ativo',
       })
       return
     }
-    setToast('O contrato fica disponível depois que o pedido for aprovado.')
+    setToast('O contrato só pode ser visualizado após a aprovação do agente bancário.')
   }
   if (!user) {
     if (!authVisible)
@@ -621,6 +1065,12 @@ export default function App() {
       group: 'MENU PRINCIPAL',
       items: [
         ['Início', LayoutDashboard],
+        ...(!agent
+          ? [
+              ['Veículos', CarFront],
+              ['Favoritos', Heart],
+            ]
+          : []),
         ['Pedidos', ClipboardList],
         ...(agent ? [['Avaliações', ShieldCheck]] : []),
         ['Contratos', FileCheck2],
@@ -670,6 +1120,9 @@ export default function App() {
                 <Icon size={18} />
                 <span>{name}</span>
                 {name === 'Pedidos' && <span className="nav-count">{mine.length}</span>}
+                {name === 'Favoritos' && favorites.length > 0 && (
+                  <span className="nav-count">{favorites.length}</span>
+                )}
               </button>
             ))}
           </div>
@@ -697,7 +1150,12 @@ export default function App() {
             <Menu />
           </button>
           <div className="breadcrumbs">
-            Espaço do cliente <span>/</span> <b>{view}</b>
+            {user.role === 'AGENTE'
+              ? 'Espaço do agente'
+              : user.role === 'BANCO'
+                ? 'Espaço bancário'
+                : 'Espaço do cliente'}{' '}
+            <span>/</span> <b>{view}</b>
           </div>
           <div className="top-actions">
             <div className="top-date">
@@ -708,21 +1166,20 @@ export default function App() {
                 year: 'numeric',
               })}
             </div>
-            <button
-              className="icon-button notification"
-              onClick={() => {
-                setHasUnreadNotification(false)
-                setToast(
-                  hasUnreadNotification
-                    ? 'Você visualizou as atualizações.'
-                    : 'Você está em dia! Nenhuma notificação nova.',
-                )
-              }}
-              aria-label={hasUnreadNotification ? 'Notificações não lidas' : 'Notificações'}
-            >
-              <Bell size={18} />
-              {hasUnreadNotification && <i />}
-            </button>
+            {hasUnreadNotification && (
+              <button
+                className="icon-button notification"
+                onClick={() => {
+                  setHasUnreadNotification(false)
+                  setToast('Notificações marcadas como lidas.')
+                }}
+                aria-label="Notificações não lidas"
+                title="Notificações não lidas - clique para marcar como lidas"
+              >
+                <Bell size={18} />
+                <i />
+              </button>
+            )}
             <div className="top-divider" />
             <button className="top-user" onClick={() => setModal('account')}>
               <div className="avatar small">{initials(user.name)}</div>
@@ -744,10 +1201,30 @@ export default function App() {
               setSelected={setSelected}
               setModal={setModal}
               setToast={setToast}
+              updateOrder={updateOrder}
+              favorites={favorites}
+              toggleFavorite={toggleFavorite}
+            />
+          ) : view === 'Veículos' && !agent ? (
+              <VehiclesPage
+              cars={cars}
+              loading={carsLoading}
+              onReserve={openOrder}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+            />
+          ) : view === 'Favoritos' && !agent ? (
+            <FavoritesPage
+              cars={cars}
+              favorites={favorites}
+              onToggleFavorite={toggleFavorite}
+              onReserve={openOrder}
+              navigate={navigate}
             />
           ) : view === 'Pedidos' || view === 'Avaliações' ? (
             <OrdersPage
               orders={filtered}
+              allOrders={mine}
               allCount={mine.length}
               loading={user.api && ordersLoading}
               error={user.api ? ordersError : ''}
@@ -769,6 +1246,13 @@ export default function App() {
               error={user.api ? contractsError : ''}
               onOpenContract={openContract}
               onRefresh={() => setContractsRefresh((value) => value + 1)}
+              userRole={user.role}
+              onConcederCredito={(contract) =>
+                updateOrder(contract.orderId || contract.id, {
+                  status: 'Concluído',
+                  contract: true,
+                })
+              }
             />
           ) : view === 'Configurações' ? (
             <SettingsPage
@@ -808,7 +1292,13 @@ export default function App() {
         <ContractModal contract={selectedContract} onClose={() => setSelectedContract(null)} />
       )}
       {modal === 'new' && (
-        <OrderModal car={car} onClose={() => setModal('')} onSubmit={createOrder} />
+        <OrderModal
+          car={car}
+          onClose={() => setModal('')}
+          onSubmit={createOrder}
+          orders={orders}
+          apiMode={user?.api}
+        />
       )}
       {modal === 'edit' && (
         <EditModal
@@ -873,12 +1363,38 @@ function Dashboard({
   setSelected,
   setModal,
   setToast,
+  updateOrder,
+  favorites = [],
+  toggleFavorite,
 }) {
-  const pending = orders.filter((o) => o.status === 'Em análise').length,
-    approved = orders.filter((o) => o.status === 'Aprovado' || o.status === 'Concluído').length,
-    spent = orders
-      .filter((o) => o.status === 'Concluído' || o.status === 'Aprovado')
-      .reduce((s, o) => s + o.total, 0)
+  const isBank = user.role === 'BANCO'
+  const isAnalyst = user.role === 'AGENTE'
+
+  const bankPendingOrders = orders.filter((o) => o.status === 'Aprovado')
+  const agentPendingOrders = orders.filter((o) => o.status === 'Em análise')
+  const clientActiveOrders = orders.filter((o) => ['Em análise', 'Aprovado'].includes(o.status))
+
+  const pendingCount = isBank
+    ? bankPendingOrders.length
+    : isAnalyst
+      ? agentPendingOrders.length
+      : clientActiveOrders.length
+
+  const approved = orders.filter((o) => o.status === 'Aprovado' || o.status === 'Concluído').length
+  const bankExecuted = orders.filter((o) => o.status === 'Concluído').length
+
+  const spent = orders
+    .filter((o) => o.status === 'Concluído' || o.status === 'Aprovado')
+    .reduce((s, o) => s + o.total, 0)
+
+  const bankPendingTotal = bankPendingOrders.reduce((s, o) => s + o.total, 0)
+  const agentPendingTotal = agentPendingOrders.reduce((s, o) => s + o.total, 0)
+
+  const displayOrders = isBank
+    ? bankPendingOrders
+    : isAnalyst
+      ? agentPendingOrders
+      : orders.slice(0, 4)
   return (
     <>
       <div className="welcome-row">
@@ -899,7 +1415,9 @@ function Dashboard({
           </h1>
           <p>
             {agent
-              ? 'Acompanhe e avalie as solicitações de aluguel.'
+              ? isBank
+                ? 'Gerencie a concessão de crédito e formalização de contratos.'
+                : 'Acompanhe e avalie as solicitações de aluguel.'
               : 'Pronto para encontrar seu próximo destino?'}
           </p>
         </div>
@@ -907,49 +1425,75 @@ function Dashboard({
           className="button primary"
           onClick={() =>
             agent
-              ? navigate('Avaliações')
-              : document.getElementById('cars')?.scrollIntoView({ behavior: 'smooth' })
+              ? navigate(isBank ? 'Contratos' : 'Avaliações')
+              : navigate('Veículos')
           }
         >
           <Plus size={17} />
-          {agent ? 'Revisar pedidos' : 'Novo aluguel'}
+          {agent
+            ? isBank
+              ? 'Revisar contratos'
+              : 'Revisar pedidos'
+            : 'Novo aluguel'}
         </button>
       </div>
       <div className="stats-grid">
         <StatCard
           icon={ClipboardList}
-          label={agent ? 'Pedidos para avaliar' : 'Pedidos ativos'}
-          value={
-            agent
-              ? pending
-              : orders.filter((o) => ['Em análise', 'Aprovado'].includes(o.status)).length
+          label={
+            isBank
+              ? 'Pedidos para conceder crédito'
+              : agent
+                ? 'Pedidos para avaliar'
+                : 'Pedidos ativos'
           }
-          change={agent ? 'Aguardando análise' : 'Solicitações em andamento'}
+          value={pendingCount}
+          change={
+            isBank
+              ? 'Aguardando liberação de crédito'
+              : agent
+                ? 'Aguardando análise'
+                : 'Solicitações em andamento'
+          }
           tone="blue"
         />
         <StatCard
           icon={Check}
-          label="Pedidos aprovados"
-          value={approved}
-          change="Este ano"
+          label={isBank ? 'Contratos formalizados' : 'Pedidos aprovados'}
+          value={isBank ? bankExecuted : approved}
+          change={isBank ? 'Crédito liberado e ativo' : 'Este ano'}
           tone="green"
         />
         <StatCard
           icon={WalletCards}
-          label={agent ? 'Valor em análise' : 'Total em aluguéis'}
+          label={
+            isBank
+              ? 'Volume aguardando crédito'
+              : agent
+                ? 'Valor em análise'
+                : 'Total em aluguéis'
+          }
           value={money(
-            agent
-              ? orders.filter((o) => o.status === 'Em análise').reduce((s, o) => s + o.total, 0)
-              : spent,
+            isBank
+              ? bankPendingTotal
+              : isAnalyst
+                ? agentPendingTotal
+                : spent,
           )}
-          change={agent ? 'Solicitações pendentes' : 'Em 2025'}
+          change={
+            isBank
+              ? `${bankPendingOrders.length} aguardando concessão`
+              : agent
+                ? 'Solicitações pendentes'
+                : 'Em 2025'
+          }
           tone="purple"
         />
         <StatCard
           icon={Activity}
-          label="Taxa de aprovação"
-          value={`${orders.length ? Math.round((approved / orders.length) * 100) : 0}%`}
-          change="Nos seus pedidos"
+          label={isBank ? 'Total de solicitações' : 'Taxa de aprovação'}
+          value={isBank ? orders.length : `${orders.length ? Math.round((approved / orders.length) * 100) : 0}%`}
+          change={isBank ? 'Base de pedidos' : 'Nos seus pedidos'}
           tone="orange"
         />
       </div>
@@ -957,21 +1501,29 @@ function Dashboard({
         <section className="panel orders-panel">
           <div className="panel-heading">
             <div>
-              <h2>{agent ? 'Pedidos recentes' : 'Pedidos recentes'}</h2>
+              <h2>
+                {isBank
+                  ? 'Pedidos para conceder crédito e executar'
+                  : agent
+                    ? 'Pedidos recentes'
+                    : 'Pedidos recentes'}
+              </h2>
               <p>
-                {agent
-                  ? 'Solicitações que precisam da sua atenção'
-                  : 'Acompanhe o status das suas solicitações'}
+                {isBank
+                  ? 'Solicitações com parecer aprovado que aguardam concessão de crédito para ativação'
+                  : agent
+                    ? 'Solicitações que precisam da sua atenção'
+                    : 'Acompanhe o status das suas solicitações'}
               </p>
             </div>
             <button
               className="text-link"
-              onClick={() => navigate(agent ? 'Avaliações' : 'Pedidos')}
+              onClick={() => navigate(isBank ? 'Contratos' : agent ? 'Avaliações' : 'Pedidos')}
             >
               Ver todos <ArrowRight size={15} />
             </button>
           </div>
-          {orders.length ? (
+          {displayOrders.length ? (
             <div className="orders-table">
               <div className="table-head">
                 <span>VEÍCULO</span>
@@ -980,13 +1532,21 @@ function Dashboard({
                 <span>STATUS</span>
                 <span />
               </div>
-              {orders.slice(0, 4).map((o) => (
-                <button className="order-row" key={o.id} onClick={() => setSelected(o)}>
+              {displayOrders.map((o) => (
+                <div
+                  className="order-row"
+                  key={o.id}
+                  style={{ cursor: 'pointer' }}
+                  onClick={() => setSelected(o)}
+                >
                   <div className="vehicle-cell">
-                    <img src={o.image} alt="" />
+                    <SafeImage src={o.image} alt="" />
                     <div>
                       <b>{o.car}</b>
-                      <span>{o.id}</span>
+                      <span>
+                        {o.id}
+                        {o.owner ? ` · ${o.owner}` : ''}
+                      </span>
                     </div>
                   </div>
                   <div className="period-cell">
@@ -995,19 +1555,47 @@ function Dashboard({
                   </div>
                   <b className="amount">{money(o.total)}</b>
                   <Status value={o.status} />
-                  <ArrowRight className="row-arrow" size={16} />
-                </button>
+                  {isBank && o.status === 'Aprovado' ? (
+                    <button
+                      className="table-quick-btn"
+                      title="Conceder crédito e executar contrato"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        updateOrder(o.id, { status: 'Concluído', contract: true })
+                      }}
+                    >
+                      <FileCheck2 size={13} /> Conceder crédito
+                    </button>
+                  ) : (
+                    <ArrowRight className="row-arrow" size={16} />
+                  )}
+                </div>
               ))}
             </div>
           ) : (
             <Empty
-              title="Ainda não há pedidos"
-              text="Encontre um carro e faça sua primeira solicitação."
-              action={() => document.getElementById('cars')?.scrollIntoView({ behavior: 'smooth' })}
-              label="Explorar carros"
+              title={
+                isBank
+                  ? 'Nenhum pedido aguardando crédito'
+                  : agent
+                    ? 'Nenhum pedido pendente'
+                    : 'Ainda não há pedidos'
+              }
+              text={
+                isBank
+                  ? 'Todos os pedidos aprovados já tiveram crédito concedido e contratos executados.'
+                  : agent
+                    ? 'Todas as solicitações de aluguel foram processadas até o momento.'
+                    : 'Encontre um carro e faça sua primeira solicitação.'
+              }
+              action={!agent ? () => navigate('Veículos') : undefined}
+              label={!agent ? 'Explorar carros' : undefined}
             />
           )}
-          <button className="mobile-view-all" onClick={() => navigate('Pedidos')}>
+          <button
+            className="mobile-view-all"
+            onClick={() => navigate(isBank ? 'Contratos' : 'Pedidos')}
+          >
             Ver todos os pedidos <ArrowRight size={15} />
           </button>
         </section>
@@ -1015,8 +1603,14 @@ function Dashboard({
           <div className="spend-card">
             <div className="spend-top">
               <div>
-                <span>{agent ? 'Pedidos aguardando' : 'GASTOS COM ALUGUEL'}</span>
-                <b>{agent ? pending : money(spent)}</b>
+                <span>
+                  {isBank
+                    ? 'Pedidos aguardando crédito'
+                    : agent
+                      ? 'Pedidos aguardando'
+                      : 'GASTOS COM ALUGUEL'}
+                </span>
+                <b>{isBank ? bankPendingOrders.length : agent ? agentPendingOrders.length : money(spent)}</b>
               </div>
               <span className="spend-icon">
                 <WalletCards size={19} />
@@ -1039,7 +1633,12 @@ function Dashboard({
             </div>
             <div className="spend-foot">
               <span>
-                <i /> {agent ? 'Visão geral de solicitações' : 'Aluguéis em 2025'}
+                <i />{' '}
+                {isBank
+                  ? 'Aguardando concessão de crédito'
+                  : agent
+                    ? 'Visão geral de solicitações'
+                    : 'Aluguéis em 2025'}
               </span>
               <span className="trend">
                 <ArrowUpRight size={13} /> 12%
@@ -1049,79 +1648,114 @@ function Dashboard({
           <div className="tip-card">
             <div className="tip-head">
               <span>
-                <ShieldCheck size={15} />
+                {user.role === 'BANCO' ? <FileCheck2 size={15} /> : <ShieldCheck size={15} />}
               </span>{' '}
-              DICA RENTFLOW
+              {user.role === 'BANCO'
+                ? 'PAINEL BANCÁRIO'
+                : user.role === 'AGENTE'
+                  ? 'PAINEL DO AGENTE'
+                  : 'DICA RENTFLOW'}
             </div>
-            <h3>Vai alugar pela primeira vez?</h3>
-            <p>Tenha seus documentos em mãos e confira os dados antes de enviar a solicitação.</p>
-            <button onClick={() => setModal('account')}>
-              Ver meu perfil <ArrowRight size={14} />
+            <h3>
+              {user.role === 'BANCO'
+                ? 'Concessão de crédito e contratos'
+                : user.role === 'AGENTE'
+                  ? 'Critérios de avaliação financeira'
+                  : 'Vai alugar pela primeira vez?'}
+            </h3>
+            <p>
+              {user.role === 'BANCO'
+                ? 'Pedidos com parecer favorável aguardam liberação de crédito para ativação dos contratos.'
+                : user.role === 'AGENTE'
+                  ? 'Revise a renda declarada e o histórico do solicitante antes de aprovar pedidos.'
+                  : 'Tenha seus documentos em mãos e confira os dados antes de enviar a solicitação.'}
+            </p>
+            <button
+              onClick={() =>
+                user.role === 'BANCO'
+                  ? navigate('Contratos')
+                  : user.role === 'AGENTE'
+                    ? navigate('Avaliações')
+                    : setModal('account')
+              }
+            >
+              {user.role === 'BANCO'
+                ? 'Ver contratos'
+                : user.role === 'AGENTE'
+                  ? 'Ver pedidos'
+                  : 'Ver meu perfil'}{' '}
+              <ArrowRight size={14} />
             </button>
             <div className="tip-art">
-              <CarFront size={72} />
+              {user.role === 'BANCO' ? (
+                <FileCheck2 size={72} />
+              ) : user.role === 'AGENTE' ? (
+                <ShieldCheck size={72} />
+              ) : (
+                <CarFront size={72} />
+              )}
               <span />
             </div>
           </div>
         </section>
       </div>
-      <section className="cars-section" id="cars">
-        <div className="section-heading">
-          <div>
-            <div className="eyebrow">ESCOLHA O SEU PRÓXIMO CARRO</div>
-            <h2>Encontre seu próximo destino.</h2>
-            <p>Veículos selecionados para deixar sua viagem ainda melhor.</p>
-          </div>
-          <button
-            className="text-link"
-            onClick={() => setToast('Novas opções de veículos em breve.')}
-          >
-            Ver todos os veículos <ArrowRight size={15} />
-          </button>
-        </div>
-        <div className="car-grid">
-          {carsLoading ? (
-            <div className="catalog-message">Carregando veículos...</div>
-          ) : cars.length ? (
-            cars.map((c) => (
-              <article className="car-card" key={c.id}>
-                <div className="car-image" style={{ background: c.color }}>
-                  <img src={c.image} alt={c.name} />
-                  <span>{c.tag}</span>
-                  <button
-                    onClick={() => setToast('Veículo salvo nos favoritos.')}
-                    aria-label="Favoritar"
-                  >
-                    ♡
-                  </button>
-                </div>
-                <div className="car-info">
-                  <div>
-                    <h3>{c.name}</h3>
-                    <span>{c.type}</span>
-                  </div>
-                  <div className="car-price">
-                    <b>{money(c.price)}</b>
-                    <span>/ dia</span>
-                  </div>
-                </div>
-                <div className="car-bottom">
-                  <span>
-                    <Check size={13} /> Proteção inclusa
-                  </span>
-                  <button onClick={() => openOrder(c)}>
-                    Reservar <ArrowRight size={14} />
-                  </button>
-                </div>
-              </article>
-            ))
-          ) : (
-            <div className="catalog-message">
-              Nenhum veículo disponível no momento. Tente novamente mais tarde.
+      {!agent && (
+        <section className="cars-section" id="cars">
+          <div className="section-heading">
+            <div>
+              <div className="eyebrow">ESCOLHA O SEU PRÓXIMO CARRO</div>
+              <h2>Encontre seu próximo destino.</h2>
+              <p>Veículos selecionados para deixar sua viagem ainda melhor.</p>
             </div>
-          )}
-        </div>
-      </section>
+            <button className="text-link" onClick={() => navigate('Veículos')}>
+              Ver todos os veículos <ArrowRight size={15} />
+            </button>
+          </div>
+          <div className="car-grid">
+            {carsLoading ? (
+              <div className="catalog-message">Carregando veículos...</div>
+            ) : cars.length ? (
+              cars.slice(0, 3).map((c) => (
+                <article className="car-card" key={c.id || c.name}>
+                  <div className="car-image" style={{ background: c.color || '#f4eee6' }}>
+                    <SafeImage src={c.image} alt={c.name} />
+                    <span>{c.tag}</span>
+                    <button
+                      className={favorites.includes(c.id || c.name) ? 'favorited' : ''}
+                      onClick={() => toggleFavorite(c)}
+                      aria-label={favorites.includes(c.id || c.name) ? 'Remover dos favoritos' : 'Favoritar'}
+                    >
+                      {favorites.includes(c.id || c.name) ? '♥' : '♡'}
+                    </button>
+                  </div>
+                  <div className="car-info">
+                    <div>
+                      <h3>{c.name}</h3>
+                      <span>{c.type}</span>
+                    </div>
+                    <div className="car-price">
+                      <b>{money(c.price)}</b>
+                      <span>/ dia</span>
+                    </div>
+                  </div>
+                  <div className="car-bottom">
+                    <span>
+                      <Check size={13} /> Proteção inclusa
+                    </span>
+                    <button onClick={() => openOrder(c)}>
+                      Reservar <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </article>
+              ))
+            ) : (
+              <div className="catalog-message">
+                Nenhum veículo disponível no momento. Tente novamente mais tarde.
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </>
   )
 }
@@ -1140,8 +1774,202 @@ function StatCard({ icon: Icon, label, value, change, tone }) {
     </div>
   )
 }
+function VehiclesPage({ cars, loading, onReserve, favorites = [], onToggleFavorite }) {
+  const [search, setSearch] = useState('')
+  const [category, setCategory] = useState('Todos')
+  const [sort, setSort] = useState('popular')
+
+  const categories = ['Todos', 'SUV', 'Sedan', 'Hatch', 'Premium', 'Híbrido', 'Elétrico', 'Picape']
+
+  const filtered = useMemo(() => {
+    return cars
+      .filter((c) => {
+        const matchesCategory =
+          category === 'Todos' ||
+          (c.category && c.category.toLowerCase() === category.toLowerCase()) ||
+          (c.type && c.type.toLowerCase().includes(category.toLowerCase())) ||
+          (c.tag && c.tag.toLowerCase().includes(category.toLowerCase()))
+        const term = search.toLowerCase().trim()
+        const matchesSearch =
+          !term ||
+          c.name.toLowerCase().includes(term) ||
+          c.type.toLowerCase().includes(term) ||
+          (c.tag && c.tag.toLowerCase().includes(term))
+        return matchesCategory && matchesSearch
+      })
+      .sort((a, b) => {
+        if (sort === 'menor_preco') return a.price - b.price
+        if (sort === 'maior_preco') return b.price - a.price
+        if (sort === 'nome') return a.name.localeCompare(b.name)
+        return 0
+      })
+  }, [cars, category, search, sort])
+
+  return (
+    <>
+      <div className="page-title-row">
+        <div>
+          <div className="eyebrow">FROTA COMPLETA</div>
+          <h1>Todos os veículos</h1>
+          <p>
+            Explore os melhores carros para sua viagem com seguro total incluso e quilometragem
+            livre.
+          </p>
+        </div>
+      </div>
+
+      <div className="filter-tabs">
+        {categories.map((cat) => {
+          const count =
+            cat === 'Todos'
+              ? cars.length
+              : cars.filter(
+                  (c) =>
+                    (c.category && c.category.toLowerCase() === cat.toLowerCase()) ||
+                    (c.type && c.type.toLowerCase().includes(cat.toLowerCase())) ||
+                    (c.tag && c.tag.toLowerCase().includes(cat.toLowerCase())),
+                ).length
+          return (
+            <button
+              key={cat}
+              className={category === cat ? 'selected' : ''}
+              onClick={() => setCategory(cat)}
+            >
+              {cat}
+              <span>{count}</span>
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="panel full-orders">
+        <div className="list-toolbar">
+          <div>
+            <h2>Modelos disponíveis</h2>
+            <span>
+              {filtered.length}{' '}
+              {filtered.length === 1 ? 'veículo disponível' : 'veículos disponíveis'}
+            </span>
+          </div>
+          <div className="catalog-actions-row">
+            <label className="search-box">
+              <Search size={16} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por modelo ou categoria..."
+              />
+            </label>
+            <select
+              className="sort-select"
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              aria-label="Ordenar veículos"
+            >
+              <option value="popular">Mais populares</option>
+              <option value="menor_preco">Menor diária</option>
+              <option value="maior_preco">Maior diária</option>
+              <option value="nome">Nome (A-Z)</option>
+            </select>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="catalog-message">Carregando catálogo de veículos...</div>
+        ) : filtered.length ? (
+          <div className="car-grid vehicles-page-grid">
+            {filtered.map((c) => (
+              <article className="car-card" key={c.id || c.name}>
+                <div className="car-image" style={{ background: c.color || '#f4eee6' }}>
+                  <SafeImage src={c.image} alt={c.name} />
+                  {c.tag && <span>{c.tag}</span>}
+                  <button
+                    className={favorites.includes(c.id || c.name) ? 'favorited' : ''}
+                    onClick={() => onToggleFavorite(c)}
+                    aria-label={favorites.includes(c.id || c.name) ? 'Remover dos favoritos' : 'Favoritar'}
+                  >
+                    {favorites.includes(c.id || c.name) ? '♥' : '♡'}
+                  </button>
+                </div>
+                <div className="car-info">
+                  <div>
+                    <h3>{c.name}</h3>
+                    <span>{c.type}</span>
+                  </div>
+                  <div className="car-price">
+                    <b>{money(c.price)}</b>
+                    <span>/ dia</span>
+                  </div>
+                </div>
+                <div className="car-bottom">
+                  <span>
+                    <Check size={13} /> Proteção inclusa
+                  </span>
+                  <button onClick={() => onReserve(c)}>
+                    Reservar <ArrowRight size={14} />
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <Empty
+            title="Nenhum veículo encontrado"
+            text="Tente alterar os termos da busca ou selecionar outra categoria."
+            action={() => {
+              setSearch('')
+              setCategory('Todos')
+            }}
+            label="Limpar filtros"
+          />
+        )}
+      </div>
+    </>
+  )
+}
+function FavoritesPage({ cars, favorites, onToggleFavorite, onReserve, navigate }) {
+  const savedCars = cars.filter((car) => favorites.includes(car.id || car.name))
+  return (
+    <>
+      <div className="page-title-row">
+        <div>
+          <div className="eyebrow">SUA SELEÇÃO</div>
+          <h1>Carros favoritos</h1>
+          <p>Seus veículos salvos para comparar e reservar quando quiser.</p>
+        </div>
+        <button className="button outline" onClick={() => navigate('Veículos')}>
+          Explorar veículos <ArrowRight size={15} />
+        </button>
+      </div>
+      {savedCars.length ? (
+        <div className="car-grid vehicles-page-grid">
+          {savedCars.map((car) => (
+            <article className="car-card" key={car.id || car.name}>
+              <div className="car-image" style={{ background: car.color || '#f4eee6' }}>
+                <SafeImage src={car.image} alt={car.name} />
+                {car.tag && <span>{car.tag}</span>}
+                <button className="favorited" onClick={() => onToggleFavorite(car)} aria-label="Remover dos favoritos">♥</button>
+              </div>
+              <div className="car-info"><div><h3>{car.name}</h3><span>{car.type}</span></div><div className="car-price"><b>{money(car.price)}</b><span>/ dia</span></div></div>
+              <div className="car-bottom"><span><Check size={13} /> Proteção inclusa</span><button onClick={() => onReserve(car)}>Reservar <ArrowRight size={14} /></button></div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <Empty title="Você ainda não salvou carros" text="Toque no coração de um veículo para encontrá-lo aqui depois." action={() => navigate('Veículos')} label="Ver veículos" />
+      )}
+    </>
+  )
+}
+
+function SafeImage({ src, alt = '' }) {
+  const [failed, setFailed] = useState(false)
+  return <img src={failed || !src ? '/car-placeholder.svg' : src} alt={alt} onError={() => setFailed(true)} />
+}
+
 function OrdersPage({
   orders,
+  allOrders = orders,
   allCount,
   loading,
   error,
@@ -1168,17 +1996,17 @@ function OrdersPage({
         </div>
         <button
           className="button primary"
-          onClick={() => (agent ? onRefresh() : navigate('Início'))}
+          onClick={() => (agent ? onRefresh() : navigate('Veículos'))}
         >
           <SlidersHorizontal size={16} />
-          {agent ? 'Atualizar lista' : 'Novo pedido'}
+          {agent ? 'Atualizar lista' : 'Novo aluguel'}
         </button>
       </div>
       <div className="filter-tabs">
         {['Todos', 'Em análise', 'Aprovado', 'Reprovado', 'Concluído', 'Cancelado'].map((f) => (
           <button className={filter === f ? 'selected' : ''} onClick={() => setFilter(f)} key={f}>
             {f}
-            <span>{f === 'Todos' ? allCount : orders.filter((o) => o.status === f).length}</span>
+            <span>{f === 'Todos' ? allCount : allOrders.filter((o) => o.status === f).length}</span>
           </button>
         ))}
       </div>
@@ -1219,7 +2047,7 @@ function OrdersPage({
             {orders.map((o) => (
               <button className="order-row" key={o.id} onClick={() => setSelected(o)}>
                 <div className="vehicle-cell">
-                  <img src={o.image} alt="" />
+                  <SafeImage src={o.image} alt="" />
                   <div>
                     <b>{o.car}</b>
                     <span>
@@ -1239,15 +2067,21 @@ function OrdersPage({
           </div>
         ) : (
           <Empty
-            title="Nenhum pedido por aqui"
-            text="Quando você tiver uma solicitação, ela aparecerá nesta lista."
+            title={agent ? 'Nenhum pedido encontrado' : 'Nenhum pedido por aqui'}
+            text={
+              agent
+                ? 'As solicitações dos clientes aparecerão nesta listagem.'
+                : 'Quando você tiver uma solicitação, ela aparecerá nesta lista.'
+            }
+            action={!agent ? () => navigate('Veículos') : undefined}
+            label={!agent ? 'Explorar carros' : undefined}
           />
         )}
       </div>
     </>
   )
 }
-function ContractsPage({ orders, contracts, loading, error, onOpenContract, onRefresh }) {
+function ContractsPage({ orders, contracts, loading, error, onOpenContract, onRefresh, userRole, onConcederCredito }) {
   const documents = [
     ...(contracts ?? []),
     ...orders
@@ -1267,7 +2101,7 @@ function ContractsPage({ orders, contracts, loading, error, onOpenContract, onRe
         <div>
           <div className="eyebrow">DOCUMENTOS E LOCAÇÕES</div>
           <h1>Seus contratos</h1>
-          <p>Consulte os contratos ativos e os aprovados que aguardam formalização.</p>
+          <p>Consulte os contratos ativos liberados pelo banco e o status das formalizações.</p>
         </div>
         <button className="button outline" onClick={onRefresh}>
           <RefreshCw size={16} /> Atualizar
@@ -1288,26 +2122,42 @@ function ContractsPage({ orders, contracts, loading, error, onOpenContract, onRe
             text={`${error} Atualize a página ou entre novamente na conta.`}
           />
         ) : documents.length ? (
-          documents.map((contract) => (
-            <div className="contract-row" key={contract.id}>
-              <div className="contract-icon">
-                <FileCheck2 />
+          documents.map((contract) => {
+            const isApprovedByBank =
+              contract.status === 'Ativo' ||
+              contract.status === 'ATIVO' ||
+              contract.status === 'Concluído'
+            return (
+              <div className="contract-row" key={contract.id}>
+                <div className="contract-icon">
+                  <FileCheck2 />
+                </div>
+                <div className="contract-name">
+                  <b>Contrato de aluguel · {contract.car}</b>
+                  <span>
+                    {contract.id} · Emitido em {contract.created}
+                  </span>
+                </div>
+                <Status value={contract.status} />
+                {isApprovedByBank ? (
+                  <button
+                    className="button outline small-button"
+                    onClick={() => onOpenContract(contract)}
+                  >
+                    Ver contrato <ArrowRight size={14} />
+                  </button>
+                ) : userRole === 'BANCO' ? (
+                  <button className="button primary small-button" onClick={() => onConcederCredito(contract)}>
+                    <FileCheck2 size={14} /> Conceder crédito e ativar
+                  </button>
+                ) : (
+                  <span className="contract-pending-chip" title="Aguardando concessão de crédito pelo agente bancário">
+                    <Clock3 size={13} /> Aguardando aprovação bancária
+                  </span>
+                )}
               </div>
-              <div className="contract-name">
-                <b>Contrato de aluguel · {contract.car}</b>
-                <span>
-                  {contract.id} · Emitido em {contract.created}
-                </span>
-              </div>
-              <Status value={contract.status} />
-              <button
-                className="button outline small-button"
-                onClick={() => onOpenContract(contract)}
-              >
-                Ver contrato <ArrowRight size={14} />
-              </button>
-            </div>
-          ))
+            )
+          })
         ) : (
           <Empty
             title="Nenhum contrato disponível"
@@ -1395,6 +2245,9 @@ function contractPdf(contract) {
 }
 
 function ContractModal({ contract, onClose }) {
+  if (contract.status === 'Aguardando banco' || contract.status === 'AGUARDANDO_BANCO') {
+    return null
+  }
   const downloadContract = () => {
     const url = URL.createObjectURL(contractPdf(contract))
     const link = document.createElement('a')
@@ -1414,13 +2267,13 @@ function ContractModal({ contract, onClose }) {
       <div className="modal-eyebrow">CONTRATO DE LOCAÇÃO · {contract.id}</div>
       <div className="contract-modal-heading">
         <div>
-          <h2>Contrato de aluguel</h2>
-          <p>Documento referente ao pedido {contract.orderId}.</p>
+          <h2>Contrato de aluguel formalizado</h2>
+          <p>Documento aprovado pelo banco referente ao pedido {contract.orderId}.</p>
         </div>
         <Status value={contract.status} />
       </div>
       <div className="contract-modal-car">
-        <img src={contract.image} alt={contract.car} />
+        <SafeImage src={contract.image} alt={contract.car} />
         <div>
           <span>VEÍCULO CONTRATADO</span>
           <b>{contract.car}</b>
@@ -1456,14 +2309,12 @@ function ContractModal({ contract, onClose }) {
       <div className="contract-modal-note">
         <ShieldCheck size={17} />
         <span>
-          {contract.status === 'Aguardando banco'
-            ? 'Pedido aprovado. O agente bancário precisa conceder o crédito para ativar o contrato.'
-            : `Este contrato ativo está vinculado ao pedido ${contract.orderId}.`}
+          Este contrato ativo está devidamente formalizado e aprovado pelo agente bancário.
         </span>
       </div>
       <button className="button primary full-button" onClick={downloadContract}>
         <Download size={16} />
-        {contract.status === 'Aguardando banco' ? 'Baixar resumo em PDF' : 'Baixar contrato em PDF'}
+        Baixar contrato em PDF
       </button>
     </Modal>
   )
@@ -2070,77 +2921,98 @@ function Modal({ children, onClose, wide = false, className = '' }) {
     </div>
   )
 }
-function OrderModal({ car, onClose, onSubmit }) {
-  const [start, setStart] = useState(''),
-    [end, setEnd] = useState('')
+function OrderModal({ car, onClose, onSubmit, orders = [], apiMode = false }) {
+  const [start, setStart] = useState('')
+  const [end, setEnd] = useState('')
+  const [unavailable, setUnavailable] = useState([])
+  const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1))
+  const [availabilityLoading, setAvailabilityLoading] = useState(false)
+  const [availabilityError, setAvailabilityError] = useState(false)
+  useEffect(() => {
+    let active = true
+    if (apiMode) {
+      setAvailabilityLoading(true)
+      setAvailabilityError(false)
+      request(`/pedidos/disponibilidade?veiculo=${encodeURIComponent(car.name)}`)
+        .then((rows) => active && setUnavailable(rows || []))
+        .catch(() => { if (active) { setUnavailable([]); setAvailabilityError(true) } })
+        .finally(() => active && setAvailabilityLoading(false))
+    } else {
+      setUnavailable(orders.filter((o) => o.car === car.name && !['Cancelado', 'Reprovado'].includes(o.status)).map((o) => ({ dataInicio: o.rawStart || parsePtBrDate(o.start), dataFim: o.rawEnd || parsePtBrDate(o.end) })))
+    }
+    return () => { active = false }
+  }, [apiMode, car.name, orders])
   const days = start && end ? Math.ceil((new Date(end) - new Date(start)) / 86400000) : 0
-  const endMin = start
-    ? new Date(new Date(`${start}T12:00:00`).getTime() + 86400000).toISOString().slice(0, 10)
-    : new Date().toISOString().slice(0, 10)
+  const followingDay = start ? new Date(`${start}T12:00:00`) : null
+  if (followingDay) followingDay.setDate(followingDay.getDate() + 1)
+  const endMin = followingDay ? formatDateInput(followingDay) : formatDateInput(new Date())
+  const conflict = start && end && unavailable.some((range) => {
+    const from = range.dataInicio || range.start
+    const to = range.dataFim || range.end
+    return from && to && start <= to && end >= from
+  })
   return (
     <Modal onClose={onClose}>
       <div className="modal-eyebrow">NOVA SOLICITAÇÃO</div>
       <h2>Vamos planejar seu aluguel.</h2>
-      <p className="modal-subtitle">
-        Escolha as datas da sua viagem. A solicitação será enviada para análise.
-      </p>
+      <p className="modal-subtitle">Escolha as datas da sua viagem. A solicitação será enviada para análise.</p>
       <div className="modal-car">
-        <img src={car.image} alt="" />
-        <div>
-          <b>{car.name}</b>
-          <span>{car.type}</span>
-        </div>
-        <strong>
-          {money(car.price)}
-          <small>/ dia</small>
-        </strong>
+        <SafeImage src={car.image} alt="" />
+        <div><b>{car.name}</b><span>{car.type}</span></div>
+        <strong>{money(car.price)}<small>/ dia</small></strong>
       </div>
-      <form
-        className="modal-form"
-        onSubmit={(e) => {
-          e.preventDefault()
-          onSubmit({ start, end, days })
-        }}
-      >
+      <form className="modal-form" onSubmit={(e) => { e.preventDefault(); onSubmit({ start, end, days }) }}>
         <div className="date-fields">
-          <label>
-            Retirada
-            <input
-              type="date"
-              required
-              min={new Date().toISOString().slice(0, 10)}
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-            />
-          </label>
-          <label>
-            Devolução
-            <input
-              type="date"
-              required
-              min={endMin}
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-            />
-          </label>
+          <label>Retirada<input type="date" required min={formatDateInput(new Date())} value={start} onChange={(e) => setStart(e.target.value)} /></label>
+          <label>Devolução<input type="date" required min={endMin} value={end} onChange={(e) => setEnd(e.target.value)} /></label>
         </div>
-        {days > 0 && (
-          <div className="order-summary">
-            <span>
-              {days} {days === 1 ? 'diária' : 'diárias'} × {money(car.price)}
-            </span>
-            <b>{money(days * car.price)}</b>
+        <MiniAvailabilityCalendar month={month} setMonth={setMonth} unavailable={unavailable} selectedStart={start} selectedEnd={end} onSelect={(date) => {
+          if (!start || end || date < start) { setStart(date); setEnd('') } else setEnd(date)
+        }} />
+        {availabilityLoading ? <div className="catalog-message">Consultando datas disponíveis...</div> : unavailable.length > 0 ? (
+          <div className="unavailable-dates-box">
+            <div className="unavailable-title"><CalendarX2 size={14} /> Datas ocupadas para {car.name}</div>
+            <div className="unavailable-tags">{unavailable.map((range, i) => {
+              const from = range.dataInicio || range.start; const to = range.dataFim || range.end
+              return <span className="unavailable-badge" key={`${from}-${i}`}>{new Date(`${from}T12:00:00`).toLocaleDateString('pt-BR')} – {new Date(`${to}T12:00:00`).toLocaleDateString('pt-BR')}</span>
+            })}</div>
+            <small>Os dias marcados não podem ser reservados. Pedidos em análise também ficam bloqueados para evitar reservas duplicadas.</small>
           </div>
-        )}
-        <button className="button primary full-button" disabled={!days}>
-          Enviar para análise <ArrowRight size={16} />
-        </button>
-        <span className="modal-footnote">
-          <ShieldCheck size={14} /> Você poderá acompanhar o status em Pedidos.
-        </span>
+        ) : null}
+        {availabilityError && <div className="conflict-error-box"><CalendarX2 size={17} /><div><b>Não foi possível consultar a disponibilidade</b><p>Tente novamente em instantes para evitar uma reserva em conflito.</p></div></div>}
+        {conflict && <div className="conflict-error-box"><CalendarX2 size={17} /><div><b>Período indisponível</b><p>Escolha outras datas; este veículo já tem uma reserva que cruza o período selecionado.</p></div></div>}
+        {days > 0 && <div className="order-summary"><span>{days} {days === 1 ? 'diária' : 'diárias'} × {money(car.price)}</span><b>{money(days * car.price)}</b></div>}
+        <button className="button primary full-button" disabled={!days || conflict || availabilityLoading || availabilityError}>Enviar para análise <ArrowRight size={16} /></button>
+        <span className="modal-footnote"><ShieldCheck size={14} /> Você poderá acompanhar o status em Pedidos.</span>
       </form>
     </Modal>
   )
+}
+
+function MiniAvailabilityCalendar({ month, setMonth, unavailable, selectedStart, selectedEnd, onSelect }) {
+  const year = month.getFullYear(); const monthIndex = month.getMonth()
+  const firstWeekday = (new Date(year, monthIndex, 1).getDay() + 6) % 7
+  const monthDays = new Date(year, monthIndex + 1, 0).getDate()
+  const today = new Date(); today.setHours(0, 0, 0, 0)
+  const key = (day) => `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  const blocked = (date) => unavailable.some((range) => {
+    const from = range.dataInicio || range.start; const to = range.dataFim || range.end
+    return from && to && date >= from && date <= to
+  })
+  return <div className="mini-calendar-wrap">
+    <div className="mini-calendar-title"><button type="button" className="calendar-month-nav" onClick={() => setMonth(new Date(year, monthIndex - 1, 1))} aria-label="Mês anterior"><ArrowLeft size={13} /></button><span>{month.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}</span><button type="button" className="calendar-month-nav" onClick={() => setMonth(new Date(year, monthIndex + 1, 1))} aria-label="Próximo mês"><ArrowRight size={13} /></button></div>
+    <div className="mini-calendar-grid">
+      {['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'].map((day) => <span className="mini-day-head" key={day}>{day}</span>)}
+      {Array.from({ length: firstWeekday }, (_, i) => <span className="mini-day empty" key={`empty-${i}`} />)}
+      {Array.from({ length: monthDays }, (_, i) => {
+        const day = i + 1; const date = key(day); const isBlocked = blocked(date) || new Date(year, monthIndex, day) < today
+        const selected = date === selectedStart || date === selectedEnd
+        const inRange = selectedStart && selectedEnd && date > selectedStart && date < selectedEnd
+        return <button type="button" key={date} disabled={isBlocked} className={`mini-day${isBlocked ? ' blocked' : ''}${selected ? ' selected' : ''}${inRange ? ' in-range' : ''}`} onClick={() => onSelect(date)} aria-label={`${day}${isBlocked ? ', indisponível' : ''}`}>{day}</button>
+      })}
+    </div>
+    <div className="mini-calendar-legend"><span><i className="mini-legend-dot free" /> Disponível</span><span><i className="mini-legend-dot blocked" /> Indisponível</span><span><i className="mini-legend-dot selected" /> Selecionado</span></div>
+  </div>
 }
 function DetailModal({ order, agent, role, onViewContract, onClose, onUpdate, onEdit }) {
   const canCancel = order.status === 'Em análise' || order.status === 'Pendente'
@@ -2155,7 +3027,7 @@ function DetailModal({ order, agent, role, onViewContract, onClose, onUpdate, on
         <Status value={order.status} />
       </div>
       <div className="detail-photo">
-        <img src={order.image} alt={order.car} />
+        <SafeImage src={order.image} alt={order.car} />
         <span>{order.type}</span>
       </div>
       <div className="detail-grid">
@@ -2226,10 +3098,33 @@ function DetailModal({ order, agent, role, onViewContract, onClose, onUpdate, on
             <FileCheck2 size={15} /> Conceder crédito e executar
           </button>
         )}
-        {!agent && ['Aprovado', 'Concluído'].includes(order.status) && (
+        {order.status === 'Concluído' && (
           <button className="button primary" onClick={() => onViewContract(order)}>
             <FileCheck2 size={15} /> Ver contrato
           </button>
+        )}
+        {order.status === 'Aprovado' && role === 'CLIENTE' && (
+          <div className="contract-waiting-box">
+            <Clock3 size={16} />
+            <span>
+              <b>Aguardando aprovação bancária</b>
+              <small>
+                Pedido aprovado pela locadora. O contrato será liberado para visualização após a
+                aprovação e concessão de crédito pelo agente bancário.
+              </small>
+            </span>
+          </div>
+        )}
+        {order.status === 'Aprovado' && role === 'AGENTE' && (
+          <div className="contract-waiting-box">
+            <Clock3 size={16} />
+            <span>
+              <b>Aguardando formalização</b>
+              <small>
+                Parecer financeiro aprovado. Aguardando concessão de crédito pelo banco.
+              </small>
+            </span>
+          </div>
         )}
       </div>
     </Modal>

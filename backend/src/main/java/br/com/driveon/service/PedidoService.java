@@ -41,13 +41,26 @@ public class PedidoService {
     LocalDate fim,
     BigDecimal valor
   ) {
+    if (inicio == null || fim == null) throw new IllegalArgumentException(
+      "Informe as datas de retirada e devolução."
+    );
     if (!fim.isAfter(inicio)) throw new IllegalArgumentException(
       "A devolução deve ocorrer após a retirada."
+    );
+    if (!pedidos.encontrarConflitos(veiculo, inicio, fim).isEmpty()) throw new IllegalArgumentException(
+      "Este veículo já está reservado para uma ou mais datas selecionadas."
     );
     var cliente = usuarios
       .findById(clienteId)
       .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado."));
     return pedidos.save(new PedidoAluguel(cliente, veiculo, inicio, fim, valor));
+  }
+
+  public List<PedidoAluguel> datasIndisponiveis(String veiculo) {
+    if (veiculo == null || veiculo.isBlank()) throw new IllegalArgumentException(
+      "Informe o veículo para consultar as datas."
+    );
+    return pedidos.listarDatasIndisponiveis(veiculo.trim());
   }
 
   @Transactional

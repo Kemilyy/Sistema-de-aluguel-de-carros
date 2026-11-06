@@ -23,7 +23,8 @@ public class AutomovelController {
     String type,
     BigDecimal price,
     String image,
-    String tag
+    String tag,
+    String category
   ) {}
 
   @GetMapping
@@ -38,7 +39,22 @@ public class AutomovelController {
           automovel.getCategoria(),
           automovel.getPrecoDiaria(),
           automovel.getImagem(),
-          automovel.getDestaque()
+          automovel.getDestaque(),
+          automovel.getCategoria().contains("SUV")
+            ? "SUV"
+            : automovel.getCategoria().contains("Sedan")
+              ? "Sedan"
+              : automovel.getCategoria().contains("Hatch")
+                ? "Hatch"
+                : automovel.getCategoria().contains("Elétrico")
+                  ? "Elétrico"
+                  : automovel.getCategoria().contains("Picape")
+                    ? "Picape"
+                    : automovel.getCategoria().contains("Híbrido")
+                      ? "Híbrido"
+                      : automovel.getCategoria().contains("Premium")
+                        ? "Premium"
+                        : "Outro"
         )
       )
       .toList();

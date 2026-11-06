@@ -8,10 +8,23 @@ export async function request(path, options = {}) {
     error.code = 'API_NOT_CONFIGURED'
     throw error
   }
+  let userEmail = ''
+  try {
+    const raw = localStorage.getItem('rentflow_user') || localStorage.getItem('driveon_user')
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      userEmail = parsed?.email || ''
+    }
+  } catch {}
+
   const response = await fetch(`${base}${path}`, {
     credentials: 'include',
     ...options,
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(userEmail ? { 'X-User-Email': userEmail } : {}),
+      ...options.headers,
+    },
   })
   if (!response.ok) {
     const responseText = await response.text()

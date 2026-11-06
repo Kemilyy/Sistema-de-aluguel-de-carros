@@ -29,6 +29,16 @@ public class PedidoController {
 
   public record Atualizacao(String status, String parecerFinanceiro, String observacao) {}
 
+  public record PeriodoIndisponivel(LocalDate dataInicio, LocalDate dataFim) {}
+
+  @GetMapping("/disponibilidade")
+  public List<PeriodoIndisponivel> datasIndisponiveis(@RequestParam String veiculo) {
+    return service.datasIndisponiveis(veiculo)
+      .stream()
+      .map(p -> new PeriodoIndisponivel(p.getDataInicio(), p.getDataFim()))
+      .toList();
+  }
+
   @GetMapping
   public List<PedidoAluguel> listar(HttpSession session) {
     Long id = usuarioId(session);
