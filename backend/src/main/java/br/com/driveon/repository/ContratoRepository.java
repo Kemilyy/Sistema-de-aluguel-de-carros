@@ -10,4 +10,5 @@ public interface ContratoRepository extends JpaRepository<Contrato, Long> {
   List<Contrato> findByPedidoClienteIdOrderByIdDesc(Long clienteId);
   boolean existsByPedidoId(Long pedidoId);
   Optional<Contrato> findByPedidoId(Long pedidoId);
+  void deleteByPedidoId(Long pedidoId);
 }

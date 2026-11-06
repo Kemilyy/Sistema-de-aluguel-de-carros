@@ -561,6 +561,12 @@ p {
   align-items: center;
   gap: 10px;
 }
+.bank-orders-panel .table-head,
+.bank-orders-panel .order-row {
+  grid-template-columns:
+    minmax(140px, 1.35fr) minmax(100px, 0.95fr) minmax(72px, 0.65fr) minmax(82px, 0.8fr)
+    minmax(138px, max-content);
+}
 .table-head {
   height: 31px;
   border-bottom: 1px solid #edf0f2;
@@ -1672,6 +1678,56 @@ p {
   color: #8b969b;
   margin: 5px 0 0;
 }
+.financial-profile {
+  margin-top: 13px;
+  padding: 12px;
+  border: 1px solid #d9ebe5;
+  border-radius: 8px;
+  background: #f6fbf9;
+}
+.financial-profile-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #27836e;
+  font-size: 10px;
+}
+.financial-profile-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+.financial-profile-fields span,
+.financial-income-list > b {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  color: #8b969b;
+  font-size: 8px;
+}
+.financial-profile-fields b,
+.financial-income-list strong {
+  color: #43565d;
+  font-size: 9px;
+  font-weight: 600;
+}
+.financial-income-list {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid #e3efeb;
+  padding-top: 9px;
+}
+.financial-income-list > span {
+  display: flex;
+  justify-content: space-between;
+  color: #55666c;
+  font-size: 9px;
+}
+.financial-income-list small {
+  color: #8b969b;
+  font-size: 9px;
+}
 .review-note {
   display: flex;
   gap: 9px;
@@ -2124,6 +2180,12 @@ p {
       13px;
     gap: 6px;
   }
+  .bank-orders-panel .table-head,
+  .bank-orders-panel .order-row {
+    grid-template-columns:
+      minmax(115px, 1.2fr) minmax(82px, 0.85fr) minmax(58px, 0.55fr) minmax(72px, 0.65fr)
+      minmax(126px, max-content);
+  }
   .vehicle-cell {
     gap: 6px;
   }
@@ -2298,6 +2360,28 @@ p {
   .order-row {
     grid-template-columns: minmax(116px, 1.3fr) minmax(75px, 0.9fr) minmax(54px, 0.6fr) 15px;
     gap: 5px;
+  }
+  .bank-orders-panel .table-head,
+  .bank-orders-panel .order-row {
+    grid-template-columns: minmax(95px, 1fr) minmax(72px, 0.85fr) max-content 34px;
+    gap: 4px;
+  }
+  .bank-orders-panel .table-head span:last-child {
+    display: none;
+  }
+  .bank-orders-panel .table-head span:nth-child(4),
+  .bank-orders-panel .order-row > .status {
+    grid-column: 3;
+  }
+  .bank-orders-panel .order-row > .table-quick-btn {
+    grid-column: 4;
+    width: 32px;
+    min-width: 32px;
+    justify-content: center;
+    padding: 7px;
+  }
+  .bank-orders-panel .bank-action-label {
+    display: none;
   }
   .table-head span:nth-child(3),
   .order-row > .amount {
@@ -2528,6 +2612,32 @@ p {
   padding: 9px 10px;
   border: 1px solid #e9edef;
   border-radius: 6px;
+}
+.profile-income-details {
+  margin: 0 0 14px;
+}
+.account-delete-zone {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid #f0d9d7;
+  border-radius: 8px;
+  background: #fffafa;
+}
+.account-delete-zone > div {
+  display: grid;
+  gap: 4px;
+}
+.account-delete-zone b {
+  color: #9e514c;
+  font-size: 10px;
+}
+.account-delete-zone span {
+  color: #8b969b;
+  font-size: 9px;
 }
 .income-details summary {
   font-size: 9px;

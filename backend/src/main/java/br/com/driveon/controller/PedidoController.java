@@ -32,7 +32,10 @@ public class PedidoController {
   public record PeriodoIndisponivel(LocalDate dataInicio, LocalDate dataFim) {}
 
   @GetMapping("/disponibilidade")
-  public List<PeriodoIndisponivel> datasIndisponiveis(@RequestParam String veiculo) {
+  public List<PeriodoIndisponivel> datasIndisponiveis(@RequestParam String veiculo, HttpSession session) {
+    if (session.getAttribute("usuarioId") == null) throw new IllegalArgumentException(
+      "Faça login para continuar."
+    );
     return service.datasIndisponiveis(veiculo)
       .stream()
       .map(p -> new PeriodoIndisponivel(p.getDataInicio(), p.getDataFim()))

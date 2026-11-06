@@ -296,4 +296,39 @@ public class AutomovelService implements ApplicationRunner {
   public List<Automovel> listar() {
     return automoveis.findAllByOrderByIdAsc();
   }
+
+  public Automovel cadastrar(
+    String matricula,
+    Integer ano,
+    String marca,
+    String modelo,
+    String placa,
+    String tipoProprietario,
+    String categoria,
+    BigDecimal precoDiaria,
+    String imagem,
+    String destaque
+  ) {
+    if (ano == null || ano < 1886) throw new IllegalArgumentException("Informe um ano válido para o veículo.");
+    if (marca == null || marca.isBlank() || modelo == null || modelo.isBlank() || placa == null || placa.isBlank()) {
+      throw new IllegalArgumentException("Marca, modelo e placa são obrigatórios.");
+    }
+    if (automoveis.existsByPlaca(placa.trim())) throw new IllegalArgumentException("Esta placa já está cadastrada.");
+    if (matricula != null && !matricula.isBlank() && automoveis.existsByMatricula(matricula.trim())) {
+      throw new IllegalArgumentException("Esta matrícula já está cadastrada.");
+    }
+    var proprietario = tipoProprietario == null ? "EMPRESA" : tipoProprietario.trim().toUpperCase();
+    if (!List.of("CLIENTE", "EMPRESA", "BANCO").contains(proprietario)) {
+      throw new IllegalArgumentException("Tipo de proprietário inválido.");
+    }
+    if (precoDiaria == null || precoDiaria.signum() < 0) throw new IllegalArgumentException(
+      "Informe um preço diário válido."
+    );
+    var vehicle = new Automovel(
+      ano, marca.trim(), modelo.trim(), placa.trim(), proprietario,
+      categoria == null || categoria.isBlank() ? "Veículo" : categoria.trim(),
+      precoDiaria, imagem == null ? "" : imagem.trim(), destaque == null ? "" : destaque.trim()
+    );
+    return automoveis.save(vehicle);
+  }
 }

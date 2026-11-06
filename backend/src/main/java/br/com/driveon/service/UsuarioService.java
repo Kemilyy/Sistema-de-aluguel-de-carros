@@ -3,6 +3,9 @@ package br.com.driveon.service;
 import br.com.driveon.model.Rendimento;
 import br.com.driveon.model.Usuario;
 import br.com.driveon.repository.RendimentoRepository;
+import br.com.driveon.repository.ContratoCreditoRepository;
+import br.com.driveon.repository.ContratoRepository;
+import br.com.driveon.repository.PedidoRepository;
 import br.com.driveon.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.util.List;
@@ -16,15 +19,24 @@ public class UsuarioService {
   private final UsuarioRepository usuarios;
   private final RendimentoRepository rendimentos;
   private final PasswordEncoder encoder;
+  private final PedidoRepository pedidos;
+  private final ContratoRepository contratos;
+  private final ContratoCreditoRepository creditos;
 
   public UsuarioService(
     UsuarioRepository usuarios,
     RendimentoRepository rendimentos,
-    PasswordEncoder encoder
+    PasswordEncoder encoder,
+    PedidoRepository pedidos,
+    ContratoRepository contratos,
+    ContratoCreditoRepository creditos
   ) {
     this.usuarios = usuarios;
     this.rendimentos = rendimentos;
     this.encoder = encoder;
+    this.pedidos = pedidos;
+    this.contratos = contratos;
+    this.creditos = creditos;
   }
 
   public record RendaDados(String empregador, BigDecimal valor) {}
@@ -90,13 +102,15 @@ public class UsuarioService {
       .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado."));
   }
 
+  @Transactional
   public Usuario atualizarCliente(
     Long id,
     String nome,
     String cpf,
     String rg,
     String endereco,
-    String profissao
+    String profissao,
+    List<RendaDados> rendas
   ) {
     var usuario = usuarios
       .findById(id)
@@ -106,6 +120,40 @@ public class UsuarioService {
     usuario.setRg(rg);
     usuario.setEndereco(endereco);
     usuario.setProfissao(profissao);
+    if (rendas != null) {
+      validarRendimentos(rendas);
+      rendimentos.deleteByClienteId(id);
+      for (var renda : rendas) {
+        if (renda != null && renda.empregador() != null && !renda.empregador().isBlank()) {
+          rendimentos.save(new Rendimento(usuario, renda.empregador().trim(), renda.valor()));
+        }
+      }
+    }
     return usuarios.save(usuario);
+  }
+
+  @Transactional
+  public void excluirCliente(Long id) {
+    var usuario = usuarios.findById(id)
+      .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado."));
+    if (!"CLIENTE".equals(usuario.getTipo())) throw new IllegalArgumentException(
+      "Apenas clientes podem excluir a própria conta."
+    );
+    for (var pedido : pedidos.findByClienteIdOrderByIdDesc(id)) {
+      creditos.deleteByPedidoId(pedido.getId());
+      contratos.deleteByPedidoId(pedido.getId());
+      pedidos.delete(pedido);
+    }
+    rendimentos.deleteByClienteId(id);
+    usuarios.delete(usuario);
+  }
+
+  private void validarRendimentos(List<RendaDados> rendas) {
+    if (rendas.size() > 3) throw new IllegalArgumentException("Informe no máximo três rendimentos.");
+    if (rendas.stream()
+      .filter(r -> r != null && r.empregador() != null && !r.empregador().isBlank())
+      .anyMatch(r -> r.valor() == null || r.valor().signum() < 0)) {
+      throw new IllegalArgumentException("O valor do rendimento deve ser positivo.");
+    }
   }
 }

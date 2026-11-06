@@ -1,6 +1,8 @@
 package br.com.driveon.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.ArrayList;
+import java.util.List;
 import jakarta.persistence.*;
 
 @Entity
@@ -27,6 +29,9 @@ public class Usuario {
   private String rg;
   private String endereco;
   private String profissao;
+
+  @OneToMany(mappedBy = "cliente", fetch = FetchType.EAGER)
+  private List<Rendimento> rendimentos = new ArrayList<>();
 
   protected Usuario() {}
 
@@ -72,6 +77,10 @@ public class Usuario {
 
   public String getProfissao() {
     return profissao;
+  }
+
+  public List<Rendimento> getRendimentos() {
+    return rendimentos;
   }
 
   public void setNome(String v) {

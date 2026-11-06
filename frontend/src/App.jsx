@@ -465,6 +465,12 @@ function apiOrder(order, cars = initialCars) {
     total: Number(order.valorTotal),
     created: 'Pedido cadastrado',
     owner: order.cliente?.nome || 'Cliente',
+    clientInfo: order.cliente ? {
+      cpf: order.cliente.cpf,
+      rg: order.cliente.rg,
+      profession: order.cliente.profissao,
+      rendimentos: order.cliente.rendimentos || [],
+    } : null,
     apiId: order.id,
     details: { note: order.observacao },
   }
@@ -608,7 +614,8 @@ export default function App() {
     }
   }, [toast])
   useEffect(() => {
-    if (apiConfigured) {
+    if (apiConfigured && user?.api) {
+      setCarsLoading(true)
       request('/automoveis')
         .then((rows) => {
           if (Array.isArray(rows) && rows.length > 0) {
@@ -667,7 +674,7 @@ export default function App() {
         })
         .finally(() => setCarsLoading(false))
     }
-  }, [])
+  }, [user?.api])
   useEffect(() => {
     if (!user?.api) {
       setOrdersLoading(false)
@@ -891,6 +898,25 @@ export default function App() {
     localStorage.removeItem('rentflow_user')
     localStorage.removeItem('rentflow_view')
     setView('Início')
+  }
+  const deleteAccount = async () => {
+    if (user?.api) {
+      try {
+        await request('/clientes/me', { method: 'DELETE' })
+      } catch (error) {
+        setToast(error.message || 'Não foi possível excluir sua conta.')
+        return
+      }
+    } else {
+      setUsers((current) => current.filter((account) => account.email !== user?.email))
+    }
+    localStorage.removeItem(`rentflow_favorites:${user.email.toLowerCase()}`)
+    setUser(null)
+    setAuthVisible(false)
+    localStorage.removeItem('rentflow_user')
+    localStorage.removeItem('rentflow_view')
+    setView('Início')
+    setToast('Sua conta e os dados associados foram excluídos.')
   }
   const openOrder = (vehicle) => {
     setCar(vehicle)
@@ -1258,6 +1284,7 @@ export default function App() {
             <SettingsPage
               user={user}
               setToast={setToast}
+              onDeleteAccount={deleteAccount}
               onSaveUser={(data) => {
                 const next = { ...user, ...data }
                 setUser(next)
@@ -1498,7 +1525,7 @@ function Dashboard({
         />
       </div>
       <div className="content-grid">
-        <section className="panel orders-panel">
+        <section className={`panel orders-panel ${isBank ? 'bank-orders-panel' : ''}`}>
           <div className="panel-heading">
             <div>
               <h2>
@@ -1564,7 +1591,7 @@ function Dashboard({
                         updateOrder(o.id, { status: 'Concluído', contract: true })
                       }}
                     >
-                      <FileCheck2 size={13} /> Conceder crédito
+                      <FileCheck2 size={13} /> <span className="bank-action-label">Conceder crédito</span>
                     </button>
                   ) : (
                     <ArrowRight className="row-arrow" size={16} />
@@ -2319,13 +2346,18 @@ function ContractModal({ contract, onClose }) {
     </Modal>
   )
 }
-function SettingsPage({ user, setToast, onSaveUser }) {
+function SettingsPage({ user, setToast, onSaveUser, onDeleteAccount }) {
+  const incomeRows = (values = []) => Array.from({ length: 3 }, (_, index) => ({
+    empregador: values[index]?.empregador || '',
+    valor: values[index]?.valor ?? '',
+  }))
   const [draft, setDraft] = useState({
     name: user.name,
     cpf: user.cpf || '',
     rg: user.rg || '',
     address: user.address || '',
     profession: user.profession || '',
+    rendimentos: incomeRows(user.rendimentos),
   })
   useEffect(() => {
     if (user.api)
@@ -2337,6 +2369,7 @@ function SettingsPage({ user, setToast, onSaveUser }) {
             rg: data.rg,
             address: data.endereco,
             profession: data.profissao,
+            rendimentos: incomeRows(data.rendimentos),
           }),
         )
         .catch(() => setToast('Não foi possível carregar seu perfil pela API.'))
@@ -2353,6 +2386,7 @@ function SettingsPage({ user, setToast, onSaveUser }) {
             rg: draft.rg,
             endereco: draft.address,
             profissao: draft.profession,
+            rendimentos: draft.rendimentos,
           }),
         })
       } catch {
@@ -2426,6 +2460,15 @@ function SettingsPage({ user, setToast, onSaveUser }) {
               <input value={user.email} disabled />
             </label>
           </div>
+          <details className="income-details profile-income-details">
+            <summary>Rendimentos (até 3)</summary>
+            {draft.rendimentos.map((income, index) => (
+              <div className="register-grid income-row" key={index}>
+                <label>Empregador {index + 1}<input value={income.empregador} onChange={(e) => setDraft((current) => ({ ...current, rendimentos: current.rendimentos.map((row, rowIndex) => rowIndex === index ? { ...row, empregador: e.target.value } : row) }))} placeholder="Empresa" /></label>
+                <label>Renda mensal<input type="number" min="0" step="0.01" value={income.valor} onChange={(e) => setDraft((current) => ({ ...current, rendimentos: current.rendimentos.map((row, rowIndex) => rowIndex === index ? { ...row, valor: e.target.value } : row) }))} placeholder="R$" /></label>
+              </div>
+            ))}
+          </details>
           <button className="button primary">
             <Check size={15} /> Salvar alterações
           </button>
@@ -2447,6 +2490,17 @@ function SettingsPage({ user, setToast, onSaveUser }) {
           </div>
           <ArrowRight size={17} />
         </button>
+        {user.role === 'CLIENTE' && (
+          <div className="account-delete-zone">
+            <div>
+              <b>Excluir minha conta</b>
+              <span>Remove seu perfil, rendimentos, pedidos e contratos relacionados.</span>
+            </div>
+            <button className="button danger-outline" onClick={() => {
+              if (window.confirm('Excluir sua conta e remover permanentemente seus pedidos e contratos? Esta ação não pode ser desfeita.')) onDeleteAccount()
+            }}>Excluir conta</button>
+          </div>
+        )}
         <button
           className="settings-row"
           onClick={() => setToast('Você receberá atualizações do status dos pedidos nesta tela.')}
@@ -3052,6 +3106,22 @@ function DetailModal({ order, agent, role, onViewContract, onClose, onUpdate, on
         <div className="detail-note">
           <b>Observação</b>
           <p>{order.details.note}</p>
+        </div>
+      )}
+      {role === 'AGENTE' && order.clientInfo && (
+        <div className="financial-profile">
+          <div className="financial-profile-heading"><ShieldCheck size={16} /><b>Dados para análise financeira</b></div>
+          <div className="financial-profile-fields">
+            <span>CPF <b>{order.clientInfo.cpf || 'Não informado'}</b></span>
+            <span>RG <b>{order.clientInfo.rg || 'Não informado'}</b></span>
+            <span>Profissão <b>{order.clientInfo.profession || 'Não informada'}</b></span>
+          </div>
+          <div className="financial-income-list">
+            <b>Rendimentos declarados</b>
+            {order.clientInfo.rendimentos.length ? order.clientInfo.rendimentos.map((income, index) => (
+              <span key={`${income.empregador}-${index}`}>{income.empregador} <strong>{money(Number(income.valor))}/mês</strong></span>
+            )) : <small>Nenhum rendimento informado.</small>}
+          </div>
         </div>
       )}
       {agent && order.status === 'Em análise' && (

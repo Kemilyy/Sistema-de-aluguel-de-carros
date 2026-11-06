@@ -1,5 +1,6 @@
 package br.com.driveon.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 
@@ -33,6 +34,7 @@ public class Rendimento {
     return id;
   }
 
+  @JsonIgnore
   public Usuario getCliente() {
     return cliente;
   }

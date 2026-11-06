@@ -3,10 +3,12 @@ package br.com.driveon.service;
 import br.com.driveon.model.Contrato;
 import br.com.driveon.model.PedidoAluguel;
 import br.com.driveon.repository.ContratoRepository;
+import br.com.driveon.repository.AutomovelRepository;
 import br.com.driveon.repository.PedidoRepository;
 import br.com.driveon.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,15 +19,18 @@ public class PedidoService {
   private final PedidoRepository pedidos;
   private final ContratoRepository contratos;
   private final UsuarioRepository usuarios;
+  private final AutomovelRepository automoveis;
 
   public PedidoService(
     PedidoRepository pedidos,
     ContratoRepository contratos,
-    UsuarioRepository usuarios
+    UsuarioRepository usuarios,
+    AutomovelRepository automoveis
   ) {
     this.pedidos = pedidos;
     this.contratos = contratos;
     this.usuarios = usuarios;
+    this.automoveis = automoveis;
   }
 
   public List<PedidoAluguel> listar(Long clienteId) {
@@ -41,19 +46,26 @@ public class PedidoService {
     LocalDate fim,
     BigDecimal valor
   ) {
+    if (veiculo == null || veiculo.isBlank()) throw new IllegalArgumentException(
+      "Selecione um veículo do catálogo."
+    );
     if (inicio == null || fim == null) throw new IllegalArgumentException(
       "Informe as datas de retirada e devolução."
     );
     if (!fim.isAfter(inicio)) throw new IllegalArgumentException(
       "A devolução deve ocorrer após a retirada."
     );
-    if (!pedidos.encontrarConflitos(veiculo, inicio, fim).isEmpty()) throw new IllegalArgumentException(
+    var automovel = automoveis.findByNomeCompleto(veiculo.trim())
+      .orElseThrow(() -> new IllegalArgumentException("Veículo não encontrado no catálogo."));
+    if (!pedidos.encontrarConflitos(veiculo.trim(), inicio, fim).isEmpty()) throw new IllegalArgumentException(
       "Este veículo já está reservado para uma ou mais datas selecionadas."
     );
     var cliente = usuarios
       .findById(clienteId)
       .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado."));
-    return pedidos.save(new PedidoAluguel(cliente, veiculo, inicio, fim, valor));
+    var dias = ChronoUnit.DAYS.between(inicio, fim);
+    var total = automovel.getPrecoDiaria().multiply(BigDecimal.valueOf(dias));
+    return pedidos.save(new PedidoAluguel(cliente, automovel, inicio, fim, total));
   }
 
   public List<PedidoAluguel> datasIndisponiveis(String veiculo) {

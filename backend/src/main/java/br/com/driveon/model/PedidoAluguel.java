@@ -16,6 +16,10 @@ public class PedidoAluguel {
   @JoinColumn(name = "cliente_id")
   private Usuario cliente;
 
+  @ManyToOne
+  @JoinColumn(name = "automovel_id")
+  private Automovel automovel;
+
   @Column(nullable = false)
   private String veiculo;
 
@@ -38,13 +42,14 @@ public class PedidoAluguel {
 
   public PedidoAluguel(
     Usuario cliente,
-    String veiculo,
+    Automovel automovel,
     LocalDate dataInicio,
     LocalDate dataFim,
     BigDecimal valorTotal
   ) {
     this.cliente = cliente;
-    this.veiculo = veiculo;
+    this.automovel = automovel;
+    this.veiculo = automovel.getMarca() + " " + automovel.getModelo();
     this.dataInicio = dataInicio;
     this.dataFim = dataFim;
     this.valorTotal = valorTotal;
@@ -56,6 +61,10 @@ public class PedidoAluguel {
 
   public Usuario getCliente() {
     return cliente;
+  }
+
+  public Automovel getAutomovel() {
+    return automovel;
   }
 
   public String getVeiculo() {
