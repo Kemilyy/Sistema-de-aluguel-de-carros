@@ -23,35 +23,18 @@ No painel do Supabase, abra **Connect** e copie os dados de conexão PostgreSQL.
 
 Antes da primeira execução, abra **SQL Editor** no Supabase e execute o conteúdo de [`backend/src/main/resources/schema.sql`](backend/src/main/resources/schema.sql).
 
-## 3. Iniciar a API (Terminal 1)
+## 3. Configurar e iniciar a API (Terminal 1)
 
-As variáveis do banco precisam estar definidas no mesmo terminal em que a API será iniciada. No PowerShell, a partir da pasta principal do projeto, configure-as assim, substituindo host e usuário pelos valores exibidos no Supabase:
+As configurações do banco ficam em `backend/.env`, que não é enviado ao Git. Esse arquivo já está criado com o endereço e usuário Supabase informados para este projeto; abra-o e preencha `SUPABASE_DB_PASSWORD` com a senha atual do banco, sem aspas. Se usar outro projeto Supabase, copie `backend/.env.example` para `backend/.env` e substitua endereço, usuário e senha pelos valores exibidos em **Connect**. Não coloque a senha em arquivos do frontend.
 
-```powershell
-$env:SUPABASE_DB_URL = "jdbc:postgresql://<HOST-DO-SUPABASE>:5432/postgres?sslmode=require"
-$env:SUPABASE_DB_USER = "postgres.<PROJECT-REF>"
-$securePassword = Read-Host "Digite a senha do banco" -AsSecureString
-$env:SUPABASE_DB_PASSWORD = [System.Net.NetworkCredential]::new("", $securePassword).Password
-```
-
-Não digite os sinais `<` e `>`: substitua o texto entre eles pelos valores verdadeiros do painel. A senha é solicitada sem aparecer enquanto você digita.
-
-Configure o Java e o Maven usando os caminhos instalados no computador. No ambiente em que este projeto foi criado, os comandos são:
-
-```powershell
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-25.0.4.1"
-$env:MAVEN_HOME = "$env:USERPROFILE\Downloads\apache-maven-3.10.0-bin\apache-maven-3.10.0"
-$env:Path = "$env:JAVA_HOME\bin;$env:MAVEN_HOME\bin;$env:Path"
-```
-
-Se o JDK ou Maven estiverem em outra pasta, ajuste os caminhos. Depois inicie a API:
+Depois, abra o PowerShell na pasta principal do projeto e inicie o backend com:
 
 ```powershell
 cd backend
-& "$env:MAVEN_HOME\bin\mvn.cmd" spring-boot:run
+powershell.exe -ExecutionPolicy Bypass -File .\iniciar.ps1
 ```
 
-Deixe esse terminal aberto. A API estará disponível em `http://localhost:8080/api`.
+O script configura Java/Maven e carrega `backend/.env` automaticamente. Se o JDK ou Maven estiver instalado em outro caminho, ajuste os caminhos no arquivo `backend/iniciar.ps1`. Deixe o terminal aberto. A API estará disponível em `http://localhost:8080/api`.
 
 ## 4. Iniciar a interface (Terminal 2)
 
@@ -61,11 +44,11 @@ Abra outro terminal na pasta principal do projeto e execute:
 npm run dev
 ```
 
-Abra o endereço mostrado pelo Vite, normalmente `http://localhost:5173`. A variável `VITE_API_URL` em `frontend/.env` já aponta para `http://localhost:8080/api`. Se alterar esse endereço, reinicie o servidor do Vite.
+Abra o endereço mostrado pelo Vite, normalmente `http://localhost:5173`. A página inicial pública permite conhecer as funcionalidades sem fazer login; use **Entrar** ou **Criar conta** para acessar o sistema. A variável `VITE_API_URL` em `frontend/.env` aponta para `http://localhost:8080/api`. Se alterar esse endereço, reinicie o servidor do Vite.
 
 ## 5. Confirmar que o banco está conectado
 
-Com os dois servidores ligados, crie uma conta pela interface. O cadastro deve entrar na tabela `usuarios` do Supabase; a senha será armazenada como hash protegido, e não em texto legível. Saia e entre com a mesma conta para confirmar o login. Se houver erro, confira as mensagens no Terminal 1 da API e confirme que as três variáveis `SUPABASE_DB_URL`, `SUPABASE_DB_USER` e `SUPABASE_DB_PASSWORD` foram definidas nele.
+Com os dois servidores ligados, crie uma conta pela interface. O cadastro deve entrar na tabela `usuarios` do Supabase; a senha será armazenada como hash protegido, e não em texto legível. Saia e entre com a mesma conta para confirmar o login. Se houver erro, confira as mensagens no Terminal 1 e confirme os valores em `backend/.env`.
 
 ## Rodar somente a interface
 
@@ -85,6 +68,7 @@ docs/                      Atividade, histórias e diagramas UML
 
 ## Funcionalidades
 
+- Página pública com apresentação dos recursos e acesso ao cadastro/login.
 - Cadastro e login de clientes e agentes.
 - Criar, consultar, modificar e cancelar pedidos de aluguel.
 - Avaliação financeira por agente e concessão de crédito por agente bancário.

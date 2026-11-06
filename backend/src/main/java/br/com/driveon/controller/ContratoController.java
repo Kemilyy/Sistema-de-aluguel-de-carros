@@ -1,6 +1,5 @@
 package br.com.driveon.controller;
 
-import br.com.driveon.model.Contrato;
 import br.com.driveon.service.ContratoService;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
@@ -18,7 +17,7 @@ public class ContratoController {
   }
 
   @GetMapping
-  public List<Contrato> listar(HttpSession session) {
+  public List<ContratoService.ContratoResumo> listar(HttpSession session) {
     exigirLogin(session);
     return "CLIENTE".equals(session.getAttribute("tipo"))
       ? service.listar((Long) session.getAttribute("usuarioId"))
@@ -27,7 +26,7 @@ public class ContratoController {
 
   @PostMapping("/pedido/{pedidoId}/executar")
   @ResponseStatus(HttpStatus.CREATED)
-  public Contrato executar(@PathVariable Long pedidoId, HttpSession session) {
+  public ContratoService.ContratoResumo executar(@PathVariable Long pedidoId, HttpSession session) {
     if (!"BANCO".equals(session.getAttribute("tipo"))) throw new IllegalArgumentException(
       "Apenas agentes bancários podem executar o contrato."
     );

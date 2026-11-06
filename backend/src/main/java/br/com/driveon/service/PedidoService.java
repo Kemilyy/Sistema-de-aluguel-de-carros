@@ -1,21 +1,30 @@
 package br.com.driveon.service;
 
+import br.com.driveon.model.Contrato;
 import br.com.driveon.model.PedidoAluguel;
+import br.com.driveon.repository.ContratoRepository;
 import br.com.driveon.repository.PedidoRepository;
 import br.com.driveon.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class PedidoService {
 
   private final PedidoRepository pedidos;
+  private final ContratoRepository contratos;
   private final UsuarioRepository usuarios;
 
-  public PedidoService(PedidoRepository pedidos, UsuarioRepository usuarios) {
+  public PedidoService(
+    PedidoRepository pedidos,
+    ContratoRepository contratos,
+    UsuarioRepository usuarios
+  ) {
     this.pedidos = pedidos;
+    this.contratos = contratos;
     this.usuarios = usuarios;
   }
 
@@ -41,13 +50,18 @@ public class PedidoService {
     return pedidos.save(new PedidoAluguel(cliente, veiculo, inicio, fim, valor));
   }
 
+  @Transactional
   public PedidoAluguel atualizar(Long id, String status, String parecer) {
     var pedido = pedidos
       .findById(id)
       .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado."));
     if (status != null) pedido.setStatus(status);
     if (parecer != null) pedido.setParecerFinanceiro(parecer);
-    return pedidos.save(pedido);
+    pedido = pedidos.save(pedido);
+    if ("APROVADO".equals(status) && !contratos.existsByPedidoId(id)) {
+      contratos.save(new Contrato(pedido, "AGUARDANDO_BANCO"));
+    }
+    return pedido;
   }
 
   public PedidoAluguel editarCliente(Long id, Long clienteId, String observacao) {

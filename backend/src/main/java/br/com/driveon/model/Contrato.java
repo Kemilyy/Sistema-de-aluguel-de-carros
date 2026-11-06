@@ -19,12 +19,17 @@ public class Contrato {
   private LocalDate dataContrato = LocalDate.now();
 
   @Column(nullable = false)
-  private String status = "ATIVO";
+  private String status = "AGUARDANDO_BANCO";
 
   protected Contrato() {}
 
   public Contrato(PedidoAluguel pedido) {
     this.pedido = pedido;
+  }
+
+  public Contrato(PedidoAluguel pedido, String status) {
+    this.pedido = pedido;
+    this.status = status;
   }
 
   public Long getId() {
@@ -41,5 +46,9 @@ public class Contrato {
 
   public String getStatus() {
     return status;
+  }
+
+  public void setStatus(String status) {
+    this.status = status;
   }
 }

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Activity,
   ArrowDownLeft,
@@ -13,12 +13,14 @@ import {
   CircleHelp,
   ClipboardList,
   Clock3,
+  Download,
   FileCheck2,
   Gauge,
   LayoutDashboard,
   LogOut,
   Menu,
   Plus,
+  RefreshCw,
   Search,
   Settings,
   ShieldCheck,
@@ -101,6 +103,8 @@ const seed = [
 const statuses = {
   'Em análise': 'pending',
   Aprovado: 'approved',
+  Ativo: 'approved',
+  'Aguardando banco': 'pending',
   Reprovado: 'rejected',
   Cancelado: 'cancelled',
   Concluído: 'done',
@@ -157,6 +161,37 @@ function apiOrder(order, cars = initialCars) {
     details: { note: order.observacao },
   }
 }
+function apiContract(contract, cars = initialCars) {
+  const car = cars.find((vehicle) => vehicle.name === contract.veiculo)
+  const dateLabel = (value) =>
+    value
+      ? new Date(`${value}T12:00:00`).toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric',
+        })
+      : '—'
+  return {
+    id: `CT-${contract.id}`,
+    apiId: contract.id,
+    orderId: `AL-${contract.pedidoId}`,
+    client: contract.clienteNome,
+    email: contract.clienteEmail,
+    car: contract.veiculo,
+    type: car?.type || 'Veículo alugado',
+    image: car?.image || initialCars[0].image,
+    start: dateLabel(contract.dataInicio),
+    end: dateLabel(contract.dataFim),
+    total: Number(contract.valorTotal),
+    created: dateLabel(contract.dataContrato),
+    status:
+      contract.status === 'ATIVO'
+        ? 'Ativo'
+        : contract.status === 'AGUARDANDO_BANCO'
+          ? 'Aguardando banco'
+          : contract.status,
+  }
+}
 async function localPassword(password, salt) {
   const key = await crypto.subtle.importKey(
     'raw',
@@ -179,26 +214,35 @@ async function localPassword(password, salt) {
 }
 
 export default function App() {
-  const [user, setUser] = useState(() => {
-    const savedUser = load('rentflow_user', null)
-    return apiConfigured ? (savedUser?.api ? savedUser : null) : savedUser
-  })
+  const [user, setUser] = useState(null)
   const [users, setUsers] = useState(() => load('rentflow_users', []))
   const [orders, setOrders] = useState(() => (apiConfigured ? [] : load('rentflow_orders', seed)))
+  const [ordersLoading, setOrdersLoading] = useState(false)
+  const [ordersError, setOrdersError] = useState('')
+  const [ordersRefresh, setOrdersRefresh] = useState(0)
+  const ordersRequestVersion = useRef(0)
+  const [contracts, setContracts] = useState([])
+  const [contractsLoading, setContractsLoading] = useState(apiConfigured)
+  const [contractsError, setContractsError] = useState('')
+  const [contractsRefresh, setContractsRefresh] = useState(0)
   const [cars, setCars] = useState(apiConfigured ? [] : initialCars)
   const [carsLoading, setCarsLoading] = useState(apiConfigured)
   const [view, setView] = useState('Início')
   const [modal, setModal] = useState('')
   const [selected, setSelected] = useState(null)
+  const [selectedContract, setSelectedContract] = useState(null)
   const [editTarget, setEditTarget] = useState(null)
   const [toast, setToast] = useState('')
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('Todos')
   const [car, setCar] = useState(initialCars[0])
   const [mobile, setMobile] = useState(false)
+  const [authVisible, setAuthVisible] = useState(false)
+  const [authInitialMode, setAuthInitialMode] = useState('login')
   const [hasUnreadNotification, setHasUnreadNotification] = useState(() =>
     load('rentflow_unread_notification', false),
   )
+  useEffect(() => localStorage.removeItem('rentflow_user'), [])
   useEffect(() => localStorage.setItem('rentflow_orders', JSON.stringify(orders)), [orders])
   useEffect(() => localStorage.setItem('rentflow_users', JSON.stringify(users)), [users])
   useEffect(
@@ -221,15 +265,71 @@ export default function App() {
     }
   }, [])
   useEffect(() => {
-    if (user?.api)
-      request('/pedidos')
-        .then((rows) => setOrders(rows.map((row) => apiOrder(row, cars))))
-        .catch(() => setToast('Não foi possível atualizar os pedidos pela API.'))
-  }, [user, cars])
+    if (!user?.api) {
+      setOrdersLoading(false)
+      setOrdersError('')
+      return
+    }
+    const requestVersion = ++ordersRequestVersion.current
+    let active = true
+    setOrders([])
+    setOrdersLoading(true)
+    setOrdersError('')
+    request('/pedidos')
+      .then((rows) => {
+        if (active && requestVersion === ordersRequestVersion.current) {
+          setOrders(rows.map((row) => apiOrder(row, cars)))
+        }
+      })
+      .catch((error) => {
+        if (active && requestVersion === ordersRequestVersion.current) {
+          setOrdersError(error.message || 'Não foi possível carregar os pedidos.')
+        }
+      })
+      .finally(() => {
+        if (active && requestVersion === ordersRequestVersion.current) {
+          setOrdersLoading(false)
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [user, cars, ordersRefresh])
+  useEffect(() => {
+    if (!user?.api) {
+      setContractsLoading(false)
+      setContractsError('')
+      setContracts([])
+      return
+    }
+    let active = true
+    setContractsLoading(true)
+    setContractsError('')
+    request('/contratos')
+      .then((rows) => {
+        if (active) setContracts(rows.map((row) => apiContract(row, cars)))
+      })
+      .catch((error) => {
+        if (active) {
+          setContracts([])
+          setContractsError(error.message || 'Não foi possível carregar os contratos.')
+        }
+      })
+      .finally(() => {
+        if (active) setContractsLoading(false)
+      })
+    return () => {
+      active = false
+    }
+  }, [user, cars, orders, contractsRefresh])
   const mine = useMemo(
     () =>
       orders.filter(
-        (o) => user?.role === 'AGENTE' || user?.role === 'BANCO' || o.owner === user?.name,
+        (o) =>
+          (user?.api && user?.role === 'CLIENTE') ||
+          user?.role === 'AGENTE' ||
+          user?.role === 'BANCO' ||
+          o.owner === user?.name,
       ),
     [orders, user],
   )
@@ -241,6 +341,12 @@ export default function App() {
   const navigate = (name) => {
     setView(name)
     setMobile(false)
+    if (name === 'Contratos') {
+      setContractsRefresh((value) => value + 1)
+    }
+    if (name === 'Pedidos' || name === 'Avaliações') {
+      setOrdersRefresh((value) => value + 1)
+    }
   }
   const signIn = async (email, password) => {
     if (apiConfigured) {
@@ -260,13 +366,14 @@ export default function App() {
         localStorage.setItem('rentflow_user', JSON.stringify(account))
         setToast(`Bem-vinda de volta, ${account.name.split(' ')[0]}!`)
       } catch (error) {
-        setToast(
-          error.status === 400
-            ? 'E-mail ou senha inválidos. Confira os dados.'
-            : 'Não foi possível acessar o servidor. O login não foi validado.',
-        )
+        return {
+          error:
+            error.status === 400
+              ? 'E-mail ou senha inválidos. Confira os dados.'
+              : 'Não foi possível conectar ao servidor. Verifique se o backend está rodando.',
+        }
       }
-      return
+      return { success: true }
     }
     const found = users.find((u) => u.email.toLowerCase() === email.toLowerCase())
     const valid =
@@ -276,7 +383,9 @@ export default function App() {
       setModal('')
       localStorage.setItem('rentflow_user', JSON.stringify(found))
       setToast(`Bem-vinda de volta, ${found.name.split(' ')[0]}!`)
-    } else setToast('E-mail ou senha inválidos. Confira os dados ou crie uma conta.')
+      return { success: true }
+    }
+    return { error: 'E-mail ou senha inválidos. Confira os dados ou crie uma conta.' }
   }
   const signUp = async (data) => {
     if (apiConfigured) {
@@ -306,16 +415,18 @@ export default function App() {
         localStorage.setItem('rentflow_user', JSON.stringify(account))
         setToast('Conta criada e salva no banco de dados.')
       } catch (error) {
-        setToast(
-          error.status === 400
-            ? 'Confira os dados do cadastro; talvez este e-mail já esteja registrado.'
-            : 'Não foi possível conectar à API. O cadastro não foi salvo.',
-        )
+        return {
+          error:
+            error.status === 400
+              ? error.message ||
+                'Confira os dados do cadastro; talvez este e-mail já esteja registrado.'
+              : 'Não foi possível conectar ao servidor. O cadastro não foi salvo.',
+        }
       }
-      return
+      return { success: true }
     }
     if (users.some((u) => u.email.toLowerCase() === data.email.toLowerCase()))
-      return setToast('Este e-mail já possui cadastro.')
+      return { error: 'Este e-mail já possui cadastro.' }
     const salt = crypto.getRandomValues(new Uint8Array(16))
     const saltHex = [...salt].map((v) => v.toString(16).padStart(2, '0')).join('')
     const account = {
@@ -336,6 +447,7 @@ export default function App() {
     setUser(account)
     localStorage.setItem('rentflow_user', JSON.stringify(account))
     setToast('Conta criada com sucesso!')
+    return { success: true }
   }
   const demo = (role) => {
     const u = {
@@ -354,6 +466,7 @@ export default function App() {
   const logout = () => {
     if (user?.api) request('/auth/logout', { method: 'POST' }).catch(() => {})
     setUser(null)
+    setAuthVisible(false)
     localStorage.removeItem('rentflow_user')
     setView('Início')
   }
@@ -395,11 +508,14 @@ export default function App() {
           }),
         })
         item = apiOrder(result, cars)
-      } catch {
-        return setToast('Não foi possível enviar o pedido pela API.')
+      } catch (error) {
+        return setToast(error.message || 'Não foi possível enviar o pedido pela API.')
       }
     }
-    setOrders([item, ...orders])
+    ordersRequestVersion.current += 1
+    setOrdersLoading(false)
+    setOrders((current) => [item, ...current.filter((order) => order.id !== item.id)])
+    setOrdersError('')
     setHasUnreadNotification(true)
     setModal('')
     setView('Pedidos')
@@ -428,17 +544,77 @@ export default function App() {
             }),
           })
         }
-      } catch {
-        return setToast('Não foi possível atualizar o pedido pela API.')
+      } catch (error) {
+        return setToast(error.message || 'Não foi possível atualizar o pedido pela API.')
       }
     }
-    setOrders(orders.map((o) => (o.id === id ? { ...o, ...patch } : o)))
+    if (user.api) {
+      ordersRequestVersion.current += 1
+      setOrdersLoading(false)
+      setOrdersError('')
+    }
+    setOrders((current) => current.map((o) => (o.id === id ? { ...o, ...patch } : o)))
     setHasUnreadNotification(true)
     setModal('')
-    setToast('Pedido atualizado.')
+    setToast(
+      patch.contract && user.role === 'BANCO'
+        ? 'Contrato ativado e disponível na aba Contratos.'
+        : patch.status === 'Aprovado'
+          ? 'Pedido aprovado. O contrato está aguardando formalização bancária.'
+          : 'Pedido atualizado.',
+    )
   }
-  if (!user)
-    return <Auth onLogin={signIn} onRegister={signUp} onDemo={demo} demoEnabled={!apiConfigured} />
+  const openContract = (order) => {
+    const savedContract = contracts.find(
+      (contract) =>
+        contract.orderId === order.id ||
+        (order.apiId && String(contract.orderId) === `AL-${order.apiId}`),
+    )
+    if (savedContract) {
+      setSelected(null)
+      setSelectedContract(savedContract)
+      return
+    }
+    if (['Aprovado', 'Concluído'].includes(order.status)) {
+      setSelected(null)
+      setSelectedContract({
+        ...order,
+        id: `CT-${order.apiId || order.id}`,
+        orderId: order.id,
+        client: order.owner,
+        email: order.email || user.email,
+        status: order.status === 'Concluído' ? 'Ativo' : 'Aguardando banco',
+      })
+      return
+    }
+    setToast('O contrato fica disponível depois que o pedido for aprovado.')
+  }
+  if (!user) {
+    if (!authVisible)
+      return (
+        <LandingPage
+          onAccess={() => {
+            setAuthInitialMode('login')
+            setAuthVisible(true)
+          }}
+          onRegister={() => {
+            setAuthInitialMode('register')
+            setAuthVisible(true)
+          }}
+        />
+      )
+
+    return (
+      <Auth
+        onLogin={signIn}
+        onRegister={signUp}
+        onDemo={demo}
+        demoEnabled={!apiConfigured}
+        initialMode={authInitialMode}
+        onBack={() => setAuthVisible(false)}
+      />
+    )
+  }
   const agent = ['AGENTE', 'BANCO'].includes(user.role)
   const nav = [
     {
@@ -573,6 +749,9 @@ export default function App() {
             <OrdersPage
               orders={filtered}
               allCount={mine.length}
+              loading={user.api && ordersLoading}
+              error={user.api ? ordersError : ''}
+              onRefresh={() => setOrdersRefresh((value) => value + 1)}
               agent={agent}
               query={query}
               setQuery={setQuery}
@@ -581,10 +760,16 @@ export default function App() {
               setSelected={setSelected}
               setModal={setModal}
               navigate={navigate}
-              setToast={setToast}
             />
           ) : view === 'Contratos' ? (
-            <ContractsPage orders={mine} setSelected={setSelected} setModal={setModal} />
+            <ContractsPage
+              orders={mine}
+              contracts={user.api ? contracts : null}
+              loading={user.api && contractsLoading}
+              error={user.api ? contractsError : ''}
+              onOpenContract={openContract}
+              onRefresh={() => setContractsRefresh((value) => value + 1)}
+            />
           ) : view === 'Configurações' ? (
             <SettingsPage
               user={user}
@@ -605,6 +790,8 @@ export default function App() {
           order={selected}
           agent={agent}
           role={user.role}
+          setToast={setToast}
+          onViewContract={openContract}
           onClose={() => setSelected(null)}
           onUpdate={(patch) => {
             updateOrder(selected.id, patch)
@@ -616,6 +803,9 @@ export default function App() {
             setModal('edit')
           }}
         />
+      )}
+      {selectedContract && (
+        <ContractModal contract={selectedContract} onClose={() => setSelectedContract(null)} />
       )}
       {modal === 'new' && (
         <OrderModal car={car} onClose={() => setModal('')} onSubmit={createOrder} />
@@ -953,6 +1143,9 @@ function StatCard({ icon: Icon, label, value, change, tone }) {
 function OrdersPage({
   orders,
   allCount,
+  loading,
+  error,
+  onRefresh,
   agent,
   query,
   setQuery,
@@ -960,7 +1153,6 @@ function OrdersPage({
   setFilter,
   setSelected,
   navigate,
-  setToast,
 }) {
   return (
     <>
@@ -976,7 +1168,7 @@ function OrdersPage({
         </div>
         <button
           className="button primary"
-          onClick={() => (agent ? setToast('Todos os pedidos carregados.') : navigate('Início'))}
+          onClick={() => (agent ? onRefresh() : navigate('Início'))}
         >
           <SlidersHorizontal size={16} />
           {agent ? 'Atualizar lista' : 'Novo pedido'}
@@ -1008,7 +1200,14 @@ function OrdersPage({
             <kbd>⌘ K</kbd>
           </label>
         </div>
-        {orders.length ? (
+        {loading ? (
+          <div className="contract-loading">Carregando pedidos...</div>
+        ) : error ? (
+          <Empty
+            title="Não foi possível carregar os pedidos"
+            text={`${error} Atualize a página ou entre novamente na conta.`}
+          />
+        ) : orders.length ? (
           <div className="orders-table">
             <div className="table-head">
               <span>VEÍCULO</span>
@@ -1048,43 +1247,62 @@ function OrdersPage({
     </>
   )
 }
-function ContractsPage({ orders, setSelected, setModal }) {
-  const contracts = orders.filter((o) => ['Aprovado', 'Concluído'].includes(o.status))
+function ContractsPage({ orders, contracts, loading, error, onOpenContract, onRefresh }) {
+  const documents = [
+    ...(contracts ?? []),
+    ...orders
+      .filter((order) => ['Aprovado', 'Concluído'].includes(order.status))
+      .filter((order) => !contracts?.some((contract) => contract.orderId === order.id))
+      .map((order) => ({
+        ...order,
+        id: `CT-${order.apiId || order.id}`,
+        orderId: order.id,
+        client: order.owner,
+        status: order.status === 'Concluído' ? 'Ativo' : 'Aguardando banco',
+      })),
+  ]
   return (
     <>
       <div className="page-title-row">
         <div>
           <div className="eyebrow">DOCUMENTOS E LOCAÇÕES</div>
           <h1>Seus contratos</h1>
-          <p>Consulte os contratos vinculados aos seus pedidos aprovados.</p>
+          <p>Consulte os contratos ativos e os aprovados que aguardam formalização.</p>
         </div>
+        <button className="button outline" onClick={onRefresh}>
+          <RefreshCw size={16} /> Atualizar
+        </button>
       </div>
       <div className="panel full-orders">
         <div className="list-toolbar">
           <div>
-            <h2>Contratos ativos</h2>
-            <span>{contracts.length} documentos disponíveis</span>
+            <h2>Contratos e formalização</h2>
+            <span>{documents.length} documentos disponíveis</span>
           </div>
         </div>
-        {contracts.length ? (
-          contracts.map((o, i) => (
-            <div className="contract-row" key={o.id}>
+        {loading ? (
+          <div className="contract-loading">Carregando contratos...</div>
+        ) : error ? (
+          <Empty
+            title="Não foi possível carregar os contratos"
+            text={`${error} Atualize a página ou entre novamente na conta.`}
+          />
+        ) : documents.length ? (
+          documents.map((contract) => (
+            <div className="contract-row" key={contract.id}>
               <div className="contract-icon">
                 <FileCheck2 />
               </div>
               <div className="contract-name">
-                <b>Contrato de aluguel · {o.car}</b>
+                <b>Contrato de aluguel · {contract.car}</b>
                 <span>
-                  {o.id} · Emitido em {o.created}
+                  {contract.id} · Emitido em {contract.created}
                 </span>
               </div>
-              <Status value={o.status} />
+              <Status value={contract.status} />
               <button
                 className="button outline small-button"
-                onClick={() => {
-                  setSelected(o)
-                  setModal('detail')
-                }}
+                onClick={() => onOpenContract(contract)}
               >
                 Ver contrato <ArrowRight size={14} />
               </button>
@@ -1092,12 +1310,162 @@ function ContractsPage({ orders, setSelected, setModal }) {
           ))
         ) : (
           <Empty
-            title="Seus contratos aparecerão aqui"
-            text="Quando um pedido for aprovado, o contrato ficará disponível nesta página."
+            title="Nenhum contrato disponível"
+            text="Quando um pedido for aprovado, o contrato aparecerá aqui aguardando formalização bancária."
           />
         )}
       </div>
     </>
+  )
+}
+function contractPdf(contract) {
+  const clean = (value) =>
+    String(value ?? '—')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\x20-\x7E]/g, ' ')
+  const escape = (value) =>
+    clean(value).replace(/\\/g, '\\\\').replace(/\(/g, '\\(').replace(/\)/g, '\\)')
+  const fields = [
+    ['Contrato', contract.id],
+    ['Pedido relacionado', contract.orderId],
+    ['Status', contract.status],
+    ['Cliente', contract.client],
+    ['E-mail', contract.email],
+    ['Veículo', contract.car],
+    ['Categoria', contract.type],
+    ['Data de retirada', contract.start],
+    ['Data de devolução', contract.end],
+    ['Valor total', money(contract.total)],
+    ['Data de emissão', contract.created],
+  ]
+  const stream = [
+    'BT /F1 20 Tf 48 790 Td (RENTFLOW) Tj ET',
+    `BT /F1 15 Tf 48 760 Td (${escape(
+      contract.status === 'Aguardando banco'
+        ? 'RESUMO DO CONTRATO DE LOCACAO'
+        : 'CONTRATO DE LOCACAO DE VEICULO',
+    )}) Tj ET`,
+    '0.75 w 48 744 m 547 744 l S',
+  ]
+  let y = 720
+  for (const [label, value] of fields) {
+    const line = `${label}: ${clean(value)}`
+    const words = line.split(/\s+/)
+    let current = ''
+    const wrapped = []
+    for (const word of words) {
+      const candidate = current ? `${current} ${word}` : word
+      if (candidate.length > 72 && current) {
+        wrapped.push(current)
+        current = word
+      } else current = candidate
+    }
+    if (current) wrapped.push(current)
+    for (const part of wrapped) {
+      stream.push(`BT /F1 10 Tf 52 ${y} Td (${escape(part)}) Tj ET`)
+      y -= 19
+    }
+    y -= 3
+  }
+  stream.push(
+    `BT /F1 9 Tf 52 ${Math.max(y - 10, 80)} Td (Documento gerado pelo RentFlow com os dados registrados no sistema.) Tj ET`,
+  )
+  const content = stream.join('\n')
+  const objects = [
+    '<< /Type /Catalog /Pages 2 0 R >>',
+    '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+    '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+    '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
+    `<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
+  ]
+  let pdf = '%PDF-1.4\n'
+  const offsets = [0]
+  for (const [index, object] of objects.entries()) {
+    offsets.push(pdf.length)
+    pdf += `${index + 1} 0 obj\n${object}\nendobj\n`
+  }
+  const xrefOffset = pdf.length
+  pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`
+  for (const offset of offsets.slice(1)) {
+    pdf += `${String(offset).padStart(10, '0')} 00000 n \n`
+  }
+  pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`
+  return new Blob([new TextEncoder().encode(pdf)], { type: 'application/pdf' })
+}
+
+function ContractModal({ contract, onClose }) {
+  const downloadContract = () => {
+    const url = URL.createObjectURL(contractPdf(contract))
+    const link = document.createElement('a')
+    const fileId = String(contract.id || contract.orderId || 'rentflow').replace(
+      /[^a-z0-9_-]/gi,
+      '-',
+    )
+    link.href = url
+    link.download = `Contrato-${fileId}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+  return (
+    <Modal onClose={onClose} wide>
+      <div className="modal-eyebrow">CONTRATO DE LOCAÇÃO · {contract.id}</div>
+      <div className="contract-modal-heading">
+        <div>
+          <h2>Contrato de aluguel</h2>
+          <p>Documento referente ao pedido {contract.orderId}.</p>
+        </div>
+        <Status value={contract.status} />
+      </div>
+      <div className="contract-modal-car">
+        <img src={contract.image} alt={contract.car} />
+        <div>
+          <span>VEÍCULO CONTRATADO</span>
+          <b>{contract.car}</b>
+          <small>{contract.type}</small>
+        </div>
+      </div>
+      <div className="contract-info-grid">
+        <div>
+          <span>Cliente</span>
+          <b>{contract.client || '—'}</b>
+        </div>
+        <div>
+          <span>E-mail cadastrado</span>
+          <b>{contract.email || '—'}</b>
+        </div>
+        <div>
+          <span>Retirada</span>
+          <b>{contract.start}</b>
+        </div>
+        <div>
+          <span>Devolução</span>
+          <b>{contract.end}</b>
+        </div>
+        <div>
+          <span>Valor total</span>
+          <b>{money(contract.total)}</b>
+        </div>
+        <div>
+          <span>Data de emissão</span>
+          <b>{contract.created}</b>
+        </div>
+      </div>
+      <div className="contract-modal-note">
+        <ShieldCheck size={17} />
+        <span>
+          {contract.status === 'Aguardando banco'
+            ? 'Pedido aprovado. O agente bancário precisa conceder o crédito para ativar o contrato.'
+            : `Este contrato ativo está vinculado ao pedido ${contract.orderId}.`}
+        </span>
+      </div>
+      <button className="button primary full-button" onClick={downloadContract}>
+        <Download size={16} />
+        {contract.status === 'Aguardando banco' ? 'Baixar resumo em PDF' : 'Baixar contrato em PDF'}
+      </button>
+    </Modal>
   )
 }
 function SettingsPage({ user, setToast, onSaveUser }) {
@@ -1297,19 +1665,187 @@ function Empty({ title, text, action, label }) {
     </div>
   )
 }
-function Auth({ onLogin, onRegister, onDemo, demoEnabled }) {
-  const [mode, setMode] = useState('login'),
+function LandingPage({ onAccess, onRegister }) {
+  const features = [
+    {
+      icon: CarFront,
+      number: '01',
+      title: 'Encontre seu carro',
+      text: 'Veja opções de veículos, compare categorias e escolha o que combina com sua viagem.',
+      tone: 'teal',
+    },
+    {
+      icon: ClipboardList,
+      number: '02',
+      title: 'Acompanhe pedidos',
+      text: 'Consulte datas, valores e o andamento de cada solicitação em um só lugar.',
+      tone: 'blue',
+    },
+    {
+      icon: ShieldCheck,
+      number: '03',
+      title: 'Análise organizada',
+      text: 'A equipe responsável avalia solicitações e atualiza o cliente sobre cada etapa.',
+      tone: 'amber',
+    },
+    {
+      icon: FileCheck2,
+      number: '04',
+      title: 'Contratos acessíveis',
+      text: 'Consulte os contratos relacionados aos pedidos aprovados sem perder o histórico.',
+      tone: 'violet',
+    },
+  ]
+
+  return (
+    <main className="public-page">
+      <header className="public-nav">
+        <a className="public-brand" href="#inicio" aria-label="RentFlow, início">
+          <span className="brand-mark">
+            <img src="/rentflow-mark.svg" alt="" />
+          </span>
+          <span>
+            Rent<span className="brand-light">Flow</span>
+            <small>ALUGUEL SIMPLES</small>
+          </span>
+        </a>
+        <nav className="public-links" aria-label="Navegação principal">
+          <a href="#funcionalidades">Funcionalidades</a>
+          <a href="#etapas">Como funciona</a>
+        </nav>
+        <div className="public-nav-actions">
+          <button className="public-login" onClick={onAccess}>
+            Entrar
+          </button>
+          <button className="button primary" onClick={onRegister}>
+            Criar conta <ArrowRight size={15} />
+          </button>
+        </div>
+      </header>
+
+      <section className="public-hero" id="inicio">
+        <div className="public-hero-copy">
+          <span className="public-eyebrow">
+            <i /> MOBILIDADE DO SEU JEITO
+          </span>
+          <h1>
+            A estrada chama.
+            <span>O carro certo está aqui.</span>
+          </h1>
+          <p>
+            Escolha um veículo, solicite seu aluguel e acompanhe cada etapa da reserva com clareza.
+          </p>
+          <div className="public-hero-actions">
+            <button className="button primary" onClick={onRegister}>
+              Começar agora <ArrowRight size={16} />
+            </button>
+            <a className="public-text-link" href="#funcionalidades">
+              Conhecer o RentFlow <ArrowDownLeft size={15} />
+            </a>
+          </div>
+          <div className="public-trust-row">
+            <span>
+              <Check size={15} /> Pedidos em um só lugar
+            </span>
+            <span>
+              <Check size={15} /> Acompanhamento simples
+            </span>
+          </div>
+        </div>
+        <div className="public-hero-visual">
+          <img
+            className="public-car-photo"
+            src={initialCars[0].image}
+            alt="Carro disponível para aluguel"
+          />
+          <div className="public-photo-label">
+            <span className="public-photo-icon">
+              <CarFront size={19} />
+            </span>
+            <span>
+              <small>ESCOLHA SEU PRÓXIMO DESTINO</small>
+              <b>Uma viagem começa com uma boa escolha.</b>
+            </span>
+          </div>
+          <div className="public-photo-index">
+            RENTFLOW <b>01 / 04</b>
+          </div>
+        </div>
+      </section>
+
+      <section className="public-features" id="funcionalidades">
+        <div className="public-section-heading">
+          <div>
+            <span className="public-eyebrow">TUDO MAIS ORGANIZADO</span>
+            <h2>Do primeiro clique à próxima viagem.</h2>
+          </div>
+          <p>Conheça o que você pode fazer no RentFlow, antes mesmo de entrar.</p>
+        </div>
+        <div className="public-feature-grid">
+          {features.map(({ icon: Icon, number, title, text, tone }) => (
+            <article className="public-feature-card" key={number}>
+              <div className={`public-feature-icon ${tone}`}>
+                <Icon size={20} />
+              </div>
+              <span className="public-feature-number">{number}</span>
+              <h3>{title}</h3>
+              <p>{text}</p>
+              <button onClick={onAccess} aria-label={`Entrar para ${title.toLowerCase()}`}>
+                Explorar <ArrowRight size={15} />
+              </button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="public-steps" id="etapas">
+        <div>
+          <span className="public-eyebrow">SIMPLES ASSIM</span>
+          <h2>Três passos para seguir viagem.</h2>
+        </div>
+        <div className="public-step-list">
+          {[
+            ['01', 'Crie sua conta', 'Informe seus dados para começar.'],
+            ['02', 'Escolha e solicite', 'Selecione o carro e as datas do aluguel.'],
+            ['03', 'Acompanhe o pedido', 'Veja a análise e as atualizações da equipe.'],
+          ].map(([number, title, text]) => (
+            <article className="public-step" key={number}>
+              <span>{number}</span>
+              <div>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </div>
+            </article>
+          ))}
+        </div>
+        <button className="button public-final-cta" onClick={onRegister}>
+          Criar minha conta <ArrowRight size={16} />
+        </button>
+      </section>
+
+      <footer className="public-footer">
+        <span>© 2026 RentFlow · Mobilidade do seu jeito</span>
+        <button onClick={onAccess}>Já tem uma conta? Entrar</button>
+      </footer>
+    </main>
+  )
+}
+
+function Auth({ onLogin, onRegister, onDemo, demoEnabled, initialMode, onBack }) {
+  const [mode, setMode] = useState(initialMode || 'login'),
     [show, setShow] = useState(false),
-    [error, setError] = useState('')
-  const submit = (e) => {
+    [error, setError] = useState(''),
+    [submitting, setSubmitting] = useState(false)
+  const submit = async (e) => {
     e.preventDefault()
+    setError('')
     const d = Object.fromEntries(new FormData(e.currentTarget))
     if (mode === 'register') {
       if (d.password.length < 6) return setError('A senha precisa ter pelo menos 6 caracteres.')
       const rendimentos = [1, 2, 3]
         .filter((i) => d[`empregador${i}`]?.trim())
         .map((i) => ({ empregador: d[`empregador${i}`], valor: Number(d[`renda${i}`] || 0) }))
-      onRegister({
+      const account = {
         name: d.name,
         email: d.email,
         password: d.password,
@@ -1319,8 +1855,27 @@ function Auth({ onLogin, onRegister, onDemo, demoEnabled }) {
         address: d.address,
         profession: d.profession,
         rendimentos,
-      })
-    } else onLogin(d.email, d.password)
+      }
+      setSubmitting(true)
+      try {
+        const result = await onRegister(account)
+        if (result?.error) setError(result.error)
+      } catch {
+        setError('Não foi possível concluir o cadastro. Verifique os dados e tente novamente.')
+      } finally {
+        setSubmitting(false)
+      }
+      return
+    }
+    setSubmitting(true)
+    try {
+      const result = await onLogin(d.email, d.password)
+      if (result?.error) setError(result.error)
+    } catch {
+      setError('Não foi possível concluir o login. Tente novamente.')
+    } finally {
+      setSubmitting(false)
+    }
   }
   return (
     <div className="auth-page">
@@ -1346,6 +1901,9 @@ function Auth({ onLogin, onRegister, onDemo, demoEnabled }) {
       </div>
       <div className="auth-right">
         <div className="auth-form-wrap">
+          <button className="auth-back" onClick={onBack}>
+            <ArrowLeft size={15} /> Voltar ao início
+          </button>
           <div className="auth-mobile-brand">
             <span className="brand-mark">
               <img src="/rentflow-mark.svg" alt="" />
@@ -1449,8 +2007,9 @@ function Auth({ onLogin, onRegister, onDemo, demoEnabled }) {
                 </button>
               </div>
             )}
-            <button className="button primary auth-submit" type="submit">
-              {mode === 'login' ? 'Entrar' : 'Criar conta'} <ArrowRight size={16} />
+            <button className="button primary auth-submit" type="submit" disabled={submitting}>
+              {submitting ? 'Aguarde...' : mode === 'login' ? 'Entrar' : 'Criar conta'}
+              {!submitting && <ArrowRight size={16} />}
             </button>
           </form>
           <div className="auth-switch">
@@ -1499,10 +2058,10 @@ function Auth({ onLogin, onRegister, onDemo, demoEnabled }) {
     </div>
   )
 }
-function Modal({ children, onClose, wide = false }) {
+function Modal({ children, onClose, wide = false, className = '' }) {
   return (
     <div className="modal-backdrop" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div className={`modal-card ${wide ? 'wide' : ''}`}>
+      <div className={`modal-card ${wide ? 'wide' : ''} ${className}`}>
         <button className="modal-close" onClick={onClose}>
           <X size={18} />
         </button>
@@ -1583,10 +2142,10 @@ function OrderModal({ car, onClose, onSubmit }) {
     </Modal>
   )
 }
-function DetailModal({ order, agent, role, onClose, onUpdate, onEdit }) {
+function DetailModal({ order, agent, role, onViewContract, onClose, onUpdate, onEdit }) {
   const canCancel = order.status === 'Em análise' || order.status === 'Pendente'
   return (
-    <Modal onClose={onClose} wide>
+    <Modal onClose={onClose} wide className="contract-view-modal">
       <div className="modal-eyebrow">DETALHES DO PEDIDO · {order.id}</div>
       <div className="detail-title">
         <div>
@@ -1667,8 +2226,8 @@ function DetailModal({ order, agent, role, onClose, onUpdate, onEdit }) {
             <FileCheck2 size={15} /> Conceder crédito e executar
           </button>
         )}
-        {!agent && order.status === 'Aprovado' && (
-          <button className="button primary" onClick={() => onUpdate({ contract: true })}>
+        {!agent && ['Aprovado', 'Concluído'].includes(order.status) && (
+          <button className="button primary" onClick={() => onViewContract(order)}>
             <FileCheck2 size={15} /> Ver contrato
           </button>
         )}

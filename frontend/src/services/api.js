@@ -14,7 +14,15 @@ export async function request(path, options = {}) {
     headers: { 'Content-Type': 'application/json', ...options.headers },
   })
   if (!response.ok) {
-    const error = new Error((await response.text()) || 'Não foi possível concluir a solicitação')
+    const responseText = await response.text()
+    let message = responseText || 'Não foi possível concluir a solicitação'
+    try {
+      const body = JSON.parse(responseText)
+      message = body.erro || body.message || body.detail || message
+    } catch {
+      // O servidor pode devolver uma mensagem em texto puro.
+    }
+    const error = new Error(message)
     error.status = response.status
     throw error
   }
